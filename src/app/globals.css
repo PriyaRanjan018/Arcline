@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:          #080808;
+  --surface:     #111111;
+  --surface-2:   #161616;
+  --border:      #222222;
+  --border-2:    #2A2A2A;
+  --accent:      #E8572A;
+  --accent-dim:  rgba(232,87,42,0.13);
+  --gold:        #C9A96E;
+  --gold-dim:    rgba(201,169,110,0.13);
+  --text-1:      #F2EDE4;
+  --text-2:      #999999;
+  --text-3:      #555555;
+  --win:         #4CAF50;
+  --setback:     #FF9800;
+  --milestone:   #7EB8F5;
+  --realization: #C9A96E;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--bg)] text-[var(--text-1)] antialiased font-body;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .ember-glow {
+    animation: emberGlow 3s infinite;
+  }
+  .shimmer-bg {
+    background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+}
+
+@keyframes emberGlow {
+  0%,100% { box-shadow: 0 0 0px transparent; }
+  50%      { box-shadow: 0 0 24px rgba(232,87,42,0.4); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-2); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
