@@ -31,8 +31,29 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Arcline Platform",
-  description: "Your journey is your portfolio.",
+  metadataBase: new URL("https://arclinee.vercel.app"),
+  title: {
+    default: "Arcline Platform",
+    template: "%s | Arcline",
+  },
+  description: "Your journey is your portfolio. A brutalist platform for builders.",
+  openGraph: {
+    title: "Arcline Platform",
+    description: "Your journey is your portfolio. A brutalist platform for builders.",
+    url: "https://arclinee.vercel.app",
+    siteName: "Arcline",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Arcline Platform",
+    description: "Your journey is your portfolio. A brutalist platform for builders.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
