@@ -129,9 +129,42 @@ export default function SettingsPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync profile data to local state
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Derive dirty state
+  const isDirty = profile ? (
+    name !== (profile.name || "") ||
+    username !== (profile.username || "") ||
+    bio !== (profile.bio || "") ||
+    location !== (profile.location || "") ||
+    JSON.stringify(selectedTags) !== JSON.stringify(profile.tags || []) ||
+    builderRole !== (profile.builder_role || "") ||
+    currentlyBuilding !== (profile.currently_building || "") ||
+    pronouns !== (profile.pronouns || "") ||
+    customPronouns !== (profile.custom_pronouns || "") ||
+    buildingSince !== (profile.building_since ? String(profile.building_since) : "") ||
+    githubUrl !== (profile.github_url || "") ||
+    twitterUrl !== (profile.twitter_url || "") ||
+    websiteUrl !== (profile.website_url || "") ||
+    linkedinUrl !== (profile.linkedin_url || "")
+  ) : false;
+
+  // Protect against accidental navigation
   useEffect(() => {
-    if (profile) {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+      }
+    };
+    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  // Sync profile data to local state ONLY ONCE initially or after explicit actions (like Save or Cancel)
+  useEffect(() => {
+    if (profile && !isInitialized) {
       setName(profile.name || "");
       setUsername(profile.username || "");
       setBio(profile.bio || "");
@@ -149,8 +182,10 @@ export default function SettingsPage() {
       setLinkedinUrl(profile.linkedin_url || "");
       setProfilePublic(profile.is_public !== false);
       setShowEntryCount(profile.show_entry_count !== false);
+      
+      setIsInitialized(true);
     }
-  }, [profile]);
+  }, [profile, isInitialized]);
 
   if (loading) {
     return (
@@ -315,6 +350,7 @@ export default function SettingsPage() {
 
       await refreshProfile();
       setSuccess("Profile settings updated successfully!");
+      setIsInitialized(false); // Re-sync local state with the exact database response
       // Optionally reload or sync
       setTimeout(() => {
         router.refresh();
@@ -649,8 +685,18 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-border2 flex justify-end">
-                  <Button type="submit" disabled={saving}>
+                <div className="pt-4 border-t border-border2 flex justify-end gap-3">
+                  {isDirty && (
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setIsInitialized(false)}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                  <Button type="submit" disabled={saving || !isDirty}>
                     {saving ? (<><Loader2 className="w-4 h-4 animate-spin" />Saving...</>) : "Save profile"}
                   </Button>
                 </div>
