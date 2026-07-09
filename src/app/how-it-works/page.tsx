@@ -20,8 +20,8 @@ const DEMO_ENTRY = {
 const STEPS = [
   { id: 1, title: "Create a Project", desc: "Start by declaring what you're building. No need to wait until launch." },
   { id: 2, title: "Log Entries", desc: "Document wins, setbacks, milestones, and realizations as they happen." },
-  { id: 3, title: "Map Momentum", desc: "Watch your journey map draw itself based on your honest progress." },
-  { id: 4, title: "Build Portfolio", desc: "Your struggles prove your capability better than any polished resume." },
+  { id: 3, title: "Watch Your Arc", desc: "Watch your journey map draw itself based on your honest progress." },
+  { id: 4, title: "Become Discoverable", desc: "Companies find builders through their build logs — not their resumes." },
 ];
 
 export default function HowItWorksPage() {
