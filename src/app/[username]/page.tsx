@@ -28,7 +28,6 @@ import EntryCard from "@/components/shared/EntryCard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import MessageDrawer from "@/components/shared/MessageDrawer";
-import ArcloneMonogram from "@/components/shared/ArcloneMonogram";
 
 const TABS = ["Build Logs", "Journey Map", "About"];
 
@@ -617,13 +616,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="opacity-30 animate-pulse">
-          <ArcloneMonogram size={48} />
-        </div>
-      </div>
-    );
+    return <div className="p-16 text-center text-text3 font-mono animate-pulse">Loading profile...</div>;
   }
 
   if (!builder) {
