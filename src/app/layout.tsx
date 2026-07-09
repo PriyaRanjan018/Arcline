@@ -3,6 +3,7 @@ import { Playfair_Display, IBM_Plex_Sans, IBM_Plex_Mono, Cormorant_Garamond } fr
 import "./globals.css";
 import ShellLayout from "@/components/shell/ShellLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
+import SplashScreen from "@/components/shared/SplashScreen";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -66,6 +67,7 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${plexSans.variable} ${plexMono.variable} ${cormorant.variable} bg-bg text-text1 min-h-screen`}
       >
+        <SplashScreen />
         <AuthProvider>
           <ShellLayout>{children}</ShellLayout>
         </AuthProvider>
