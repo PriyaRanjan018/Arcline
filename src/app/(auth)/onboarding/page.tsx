@@ -24,6 +24,8 @@ export default function OnboardingPage() {
   const [bio, setBio] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState<null | boolean>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [nameAvailable, setNameAvailable] = useState<null | boolean>(null);
+  const [checkingName, setCheckingName] = useState(false);
 
   // Step 2 — First Build
   const [buildName, setBuildName] = useState("");
@@ -59,6 +61,25 @@ export default function OnboardingPage() {
     return () => clearTimeout(timer);
   }, [username, supabase]);
 
+  // Check name availability with debounce
+  useEffect(() => {
+    if (!name || name.trim().length < 2) {
+      setNameAvailable(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setCheckingName(true);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("name", name.trim())
+        .maybeSingle();
+      setNameAvailable(!data);
+      setCheckingName(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [name, supabase]);
+
   async function handleSubmit() {
     if (!user) return;
     setSubmitting(true);
@@ -68,13 +89,24 @@ export default function OnboardingPage() {
       // 1. Create profile
       const { error: profileError } = await supabase.from("profiles").upsert({
         id: user.id,
-        name,
+        name: name.trim(),
         username: username.toLowerCase().trim(),
         bio,
         avatar_url: user.user_metadata?.avatar_url ?? null,
         is_builder: true,
       });
-      if (profileError) throw new Error(profileError.message);
+      if (profileError) {
+        if (profileError.code === '23505') {
+          if (profileError.message.includes('profiles_name_key')) {
+             throw new Error("This Display Name was just taken by someone else.");
+          }
+          if (profileError.message.includes('profiles_username_key')) {
+             throw new Error("This Username was just taken by someone else.");
+          }
+          throw new Error("This name or username is already taken.");
+        }
+        throw new Error(profileError.message);
+      }
 
       // 2. Create first build if provided
       if (buildName.trim()) {
@@ -161,12 +193,25 @@ export default function OnboardingPage() {
               <div className="flex flex-col gap-4">
                 <div>
                   <label className="font-mono text-[0.65rem] text-text3 uppercase tracking-widest block mb-2">Full Name *</label>
-                  <input
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Priya Ranjan"
-                    className="w-full h-[44px] bg-[#111111] border border-[#222222] font-body text-[0.88rem] text-text1 px-4 focus:outline-none focus:border-accent transition-colors placeholder-[#444444]"
-                  />
+                  <div className="relative">
+                    <input
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Priya Ranjan"
+                      className="w-full h-[44px] bg-[#111111] border border-[#222222] font-body text-[0.88rem] text-text1 px-4 pr-24 focus:outline-none focus:border-accent transition-colors placeholder-[#444444]"
+                    />
+                    {name.trim().length >= 2 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[0.65rem]">
+                        {checkingName ? (
+                          <span className="text-text3">…</span>
+                        ) : nameAvailable ? (
+                          <span className="text-win">✓ available</span>
+                        ) : (
+                          <span className="text-setback">✗ taken</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -177,7 +222,7 @@ export default function OnboardingPage() {
                       value={username}
                       onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                       placeholder="priya"
-                      className="w-full h-[44px] bg-[#111111] border border-[#222222] font-mono text-[0.88rem] text-text1 pl-8 pr-4 focus:outline-none focus:border-accent transition-colors placeholder-[#444444]"
+                      className="w-full h-[44px] bg-[#111111] border border-[#222222] font-mono text-[0.88rem] text-text1 pl-8 pr-24 focus:outline-none focus:border-accent transition-colors placeholder-[#444444]"
                     />
                     {username.length >= 3 && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[0.65rem]">
@@ -210,7 +255,7 @@ export default function OnboardingPage() {
 
               <button
                 onClick={() => setStep(1)}
-                disabled={!name.trim() || !username || usernameAvailable !== true}
+                disabled={!name.trim() || !username || nameAvailable !== true || usernameAvailable !== true}
                 className="w-full h-[46px] bg-accent font-body font-medium text-[0.88rem] text-white hover:bg-[#D14820] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Continue →
