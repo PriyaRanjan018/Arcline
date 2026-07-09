@@ -50,7 +50,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
         <Topbar isLanding={true} />
         <main className="flex-1 mt-[48px]">{children}</main>
         <footer className="w-full py-8 text-center text-[#555555] italic">
-          Your journey is your portfolio.
+          Proof of Work. NOT perfection.
         </footer>
         <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       </div>
@@ -66,7 +66,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 md:ml-[240px] w-full">{children}</main>
       </div>
       <footer className="w-full py-8 text-center text-[#555555] italic md:pl-[240px] pb-[76px] md:pb-8">
-        Your journey is your portfolio.
+        Proof of Work. NOT perfection.
       </footer>
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
     </div>

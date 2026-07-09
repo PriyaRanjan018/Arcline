@@ -36,10 +36,10 @@ export const metadata: Metadata = {
     default: "Arcline Platform",
     template: "%s | Arcline",
   },
-  description: "Your journey is your portfolio. A brutalist platform for builders.",
+  description: "Proof of Work. NOT perfection. A brutalist platform for builders.",
   openGraph: {
     title: "Arcline Platform",
-    description: "Your journey is your portfolio. A brutalist platform for builders.",
+    description: "Proof of Work. NOT perfection. A brutalist platform for builders.",
     url: "https://arclinee.vercel.app",
     siteName: "Arcline",
     locale: "en_US",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Arcline Platform",
-    description: "Your journey is your portfolio. A brutalist platform for builders.",
+    description: "Proof of Work. NOT perfection. A brutalist platform for builders.",
   },
   robots: {
     index: true,

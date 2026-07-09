@@ -74,11 +74,12 @@ export default function LandingPage() {
       <div className="w-full md:w-[320px] md:fixed md:left-0 md:top-[48px] md:bottom-0 bg-surface border-r border-border p-8 flex flex-col justify-center">
         <h1
           className="font-display font-black text-text1 mb-6"
-          style={{ fontSize: "clamp(2.8rem, 6vw, 4.8rem)", lineHeight: 1.05, letterSpacing: "-0.03em" }}
+          style={{ fontSize: "clamp(2.8rem, 4.7vw, 4.8rem)", lineHeight: 1.05, letterSpacing: "-0.03em" }}
         >
-          Your journey <br />
-          is your <br />
-          <span className="italic text-accent">portfolio.</span>
+          Proof<br />
+          of <span className="ml-3">work</span><br />
+          NOT<br />
+          <span className="italic text-accent" style={{ fontSize: "4.2rem" }}>perfection.</span>
         </h1>
         <p className="text-text2 mb-8 text-sm leading-relaxed">
           Arcline is a proof-of-work platform for builders. Stop curating a perfect grid. Start documenting the struggles, pivots, and realizations that actually make you dangerous.

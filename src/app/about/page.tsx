@@ -102,7 +102,7 @@ export default function AboutPage() {
               &ldquo;
             </div>
             <p className="relative z-10 font-display text-2xl font-bold italic text-text1">
-              &quot;Your journey is your portfolio. Not the polished version. The real one.&quot;
+              &quot;Proof of Work. NOT perfection. Not the polished version. The real one.&quot;
             </p>
           </div>
         </section>

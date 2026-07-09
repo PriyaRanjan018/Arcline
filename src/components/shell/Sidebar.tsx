@@ -276,7 +276,7 @@ function GuestSidebar({ pathname }: { pathname: string }) {
       </div>
 
       <div className="mt-auto font-body font-light italic text-[0.7rem] text-[#444444] p-[12px]">
-        Your journey is your portfolio.
+        Proof of Work. NOT perfection.
       </div>
     </div>
   );

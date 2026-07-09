@@ -134,7 +134,7 @@ export default function OnboardingPage() {
 
           <div className="border-t border-[#222222] pt-8">
             <p className="font-body font-light text-text3 text-[0.78rem] leading-relaxed italic">
-              &ldquo;Your journey is your portfolio. Stop curating. Start documenting.&rdquo;
+              &ldquo;Proof of Work. NOT perfection. Stop curating. Start documenting.&rdquo;
             </p>
           </div>
         </div>
