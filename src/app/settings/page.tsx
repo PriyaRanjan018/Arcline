@@ -129,11 +129,9 @@ export default function SettingsPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasInitialized = useRef(false);
-
   // Sync profile data to local state
   useEffect(() => {
-    if (profile && !hasInitialized.current) {
+    if (profile) {
       setName(profile.name || "");
       setUsername(profile.username || "");
       setBio(profile.bio || "");
@@ -151,7 +149,6 @@ export default function SettingsPage() {
       setLinkedinUrl(profile.linkedin_url || "");
       setProfilePublic(profile.is_public !== false);
       setShowEntryCount(profile.show_entry_count !== false);
-      hasInitialized.current = true;
     }
   }, [profile]);
 
