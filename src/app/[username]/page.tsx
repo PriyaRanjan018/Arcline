@@ -269,10 +269,10 @@ function JourneyMapTab({ entries }: { entries: any[] }) {
       </div>
 
       {/* ── Legend & Summary Dashboard ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-surface border border-border p-6 md:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.2fr_0.7fr] gap-6 bg-surface border border-border p-6 md:p-8">
         
         {/* Metric 1: Circular Progress Ring */}
-        <div className="lg:col-span-4 flex flex-col sm:flex-row items-center gap-6 border-b lg:border-b-0 lg:border-r border-border pb-6 sm:pb-0 sm:pr-6">
+        <div className="flex flex-col sm:flex-row items-center gap-6 border-b lg:border-b-0 lg:border-r border-border pb-6 sm:pb-0 sm:pr-6">
           <div className="relative w-28 h-28 flex-shrink-0">
             {/* SVG circle progress */}
             <svg className="w-full h-full transform -rotate-90">
@@ -305,7 +305,7 @@ function JourneyMapTab({ entries }: { entries: any[] }) {
         </div>
 
         {/* Metric 2: Grid Statistics */}
-        <div className="lg:col-span-5 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-border pb-6 lg:pb-0 lg:pr-6">
+        <div className="flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-border pb-6 lg:pb-0 lg:pr-6">
           <div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-text3">Journey Stats</span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
@@ -341,7 +341,7 @@ function JourneyMapTab({ entries }: { entries: any[] }) {
         </div>
 
         {/* Metric 3: Next Step Call-To-Action */}
-        <div className="lg:col-span-3 flex flex-col justify-between h-full min-h-[120px]">
+        <div className="flex flex-col justify-between h-full min-h-[120px]">
           <div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-text3">Next Step</span>
             <h4 className="text-xs font-display font-bold text-text1 mt-2 flex items-center gap-1">
