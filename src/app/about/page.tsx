@@ -2,20 +2,36 @@
 
 import { useEffect, useState } from "react";
 import PageTransition from "@/components/shared/PageTransition";
+import Link from "next/link";
+import { motion } from "framer-motion";
+
+const toc = [
+  { id: "problem", label: "The Problem" },
+  { id: "belief", label: "The Belief" },
+  { id: "platform", label: "The Platform" },
+  { id: "founder", label: "The Founder" },
+  { id: "values", label: "We Believe" },
+];
 
 export default function AboutPage() {
   const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
+    const intersectingSections: Record<string, boolean> = {};
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
+          intersectingSections[entry.target.id] = entry.isIntersecting;
         });
+
+        // Find the first section in the array that is currently intersecting
+        const activeId = toc.find((item) => intersectingSections[item.id])?.id;
+        if (activeId) {
+          setActiveSection(activeId);
+        }
       },
-      { rootMargin: "-20% 0px -80% 0px" }
+      { rootMargin: "-100px 0px -60% 0px", threshold: 0 }
     );
 
     document.querySelectorAll("section[id]").forEach((section) => {
@@ -25,15 +41,18 @@ export default function AboutPage() {
     return () => observer.disconnect();
   }, []);
 
-  const toc = [
-    { id: "problem", label: "The Problem" },
-    { id: "belief", label: "The Belief" },
-    { id: "platform", label: "The Platform" },
-    { id: "founder", label: "The Founder" },
-  ];
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      const y = element.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top: y, behavior: "smooth" });
+      setActiveSection(id);
+    }
+  };
 
   return (
-    <PageTransition className="flex justify-center min-h-[calc(100vh-48px)] w-full">
+    <PageTransition className="flex justify-center gap-8 lg:gap-16 min-h-[calc(100vh-48px)] w-full max-w-[1100px] mx-auto">
       {/* Main Content Area */}
       <div className="w-full max-w-[720px] px-6 md:px-12 py-12 flex flex-col space-y-20 z-10 relative pb-32">
         {/* Header Section */}
@@ -90,6 +109,14 @@ export default function AboutPage() {
               &quot;Your struggle is not your weakness. It is your signal.&quot;
             </p>
           </div>
+          <div className="font-body text-text2 space-y-4 font-light text-[0.9rem] leading-relaxed mt-2">
+            <p>
+              We built tools for performance, not for process. We rewarded the announcement and ignored the attempt. So the people still in the middle — still figuring it out — learned to stay quiet until they had something worth showing.
+            </p>
+            <p>
+              That silence is the most expensive thing in the builder ecosystem. Because the struggle is not a phase to survive before the story starts. The struggle IS the story. And it is the most honest signal of capability that has ever existed.
+            </p>
+          </div>
         </section>
 
         {/* 03 Platform */}
@@ -103,6 +130,17 @@ export default function AboutPage() {
             </div>
             <p className="relative z-10 font-display text-2xl font-bold italic text-text1">
               &quot;Proof of Work. NOT perfection. Not the polished version. The real one.&quot;
+            </p>
+          </div>
+          <div className="font-body text-text2 space-y-4 font-light text-[0.9rem] leading-relaxed mt-2">
+            <p>
+              Arcline is not a social network. It is a record.
+            </p>
+            <p>
+              Every entry you write is timestamped, typed, and permanent. The day you almost quit lives next to the day you shipped. The pivot that felt like failure sits beside the win it made possible.
+            </p>
+            <p>
+              Six months from now, someone building what you built on Day 1 will find your journey and know they are not alone. That is not a feature. That is the whole point.
             </p>
           </div>
         </section>
@@ -139,32 +177,76 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
+
+        {/* WE BELIEVE */}
+        <section className="flex flex-col space-y-12 pt-16 border-t border-border" id="values">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-text1 text-center mb-4">
+            WE BELIEVE
+          </h2>
+          
+          <div className="space-y-12 max-w-2xl mx-auto">
+            <div className="flex flex-col space-y-3 pb-12 border-b border-border/50 text-center">
+              <h3 className="font-display text-xl font-bold text-text1 italic">The resume is dying.</h3>
+              <p className="font-body text-text2 font-light text-[0.95rem] leading-relaxed">
+                Not because credentials don&apos;t matter — but because anyone can claim credentials. What nobody can fake is a timestamped, honest record of how they think, how they recover, and whether they kept going. That record is your real portfolio.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}  
+        <section className="pt-24 pb-12 text-center" id="cta">
+          <p className="font-display text-2xl font-bold text-text1 mb-8 italic">
+            Your journey is already happening.<br />
+            Start documenting it honestly.
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center px-8 py-4 bg-accent text-white font-body font-medium hover:bg-[#D14820] transition-colors"
+          >
+            Start your build log &rarr;
+          </Link>
+        </section>
       </div>
 
       {/* Right Panel (TOC) */}
-      <aside className="hidden xl:block w-[280px] flex-shrink-0 border-l border-border bg-bg pt-12 pr-8 pl-8 relative">
+      <aside className="hidden lg:block w-[240px] flex-shrink-0 pt-12 pr-4 relative">
         <div className="sticky top-[100px]">
-          <h3 className="font-mono text-text3 tracking-widest text-[0.58rem] uppercase mb-6">
+          <h3 className="font-mono text-text3 tracking-widest text-[0.58rem] uppercase mb-6 pl-4">
             On This Page
           </h3>
-          <div className="relative">
+          <div className="relative pl-4">
             {/* Track */}
-            <div className="absolute left-0 top-2 bottom-2 w-[1px] bg-border z-0"></div>
+            <div className="absolute left-0 top-1 bottom-1 w-[1px] bg-border z-0"></div>
             <ul className="relative z-10 flex flex-col space-y-4">
-              {toc.map((item) => (
-                <li key={item.id}>
-                  <a
-                    href={`#${item.id}`}
-                    className={`block pl-4 font-body text-[0.82rem] transition-colors border-l-2 ${
-                      activeSection === item.id
-                        ? "text-text1 border-accent -ml-[1px]"
-                        : "text-text2 hover:text-text1 border-transparent"
-                    }`}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
+              {toc.map((item) => {
+                const isActive = activeSection === item.id;
+                return (
+                  <li key={item.id} className="relative">
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-toc-indicator"
+                        className="absolute -left-[16px] top-0 bottom-0 w-[2px] bg-accent z-20"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <a
+                      href={`#${item.id}`}
+                      onClick={(e) => scrollToSection(e, item.id)}
+                      className={`block font-body text-[0.82rem] transition-colors ${
+                        isActive
+                          ? "text-text1"
+                          : "text-text2 hover:text-text1"
+                      }`}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

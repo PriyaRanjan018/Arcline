@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import PageTransition from "@/components/shared/PageTransition";
 import EntryCard from "@/components/shared/EntryCard";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const DEMO_ENTRY = {
@@ -156,6 +157,17 @@ export default function HowItWorksPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Final CTA Section */}
+        <div className="mt-32 text-center pb-12">
+          <p className="text-xl md:text-2xl font-display font-medium text-text1 mb-8 max-w-2xl mx-auto leading-relaxed">
+            "The best builders aren't the ones who never failed.<br/>
+            <span className="text-text2">They're the ones who documented why they kept going.</span>"
+          </p>
+          <Link href="/login" className="inline-flex items-center justify-center px-8 py-4 bg-accent text-white font-body font-medium hover:bg-[#D14820] transition-colors">
+            Start your build log &rarr;
+          </Link>
         </div>
       </div>
 
