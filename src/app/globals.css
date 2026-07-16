@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-logo: 'Cormorant Garamond', serif;
   --bg:          #080808;
   --surface:     #111111;
   --surface-2:   #161616;

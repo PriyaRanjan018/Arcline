@@ -37,16 +37,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'slug must be lowercase alphanumeric with hyphens only' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
-    .from('projects')
-    .insert({ user_id: user.id, title, slug, tagline, description, category, stage })
-    .select()
-    .single()
+  let finalSlug = slug;
+  let counter = 1;
+  let success = false;
+  let projectData = null;
 
-  if (error) {
-    if (error.code === '23505') return NextResponse.json({ error: 'You already have a project with that slug' }, { status: 409 })
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  while (!success && counter < 50) {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({ user_id: user.id, title, slug: finalSlug, tagline, description, category, stage })
+      .select()
+      .single()
+
+    if (error) {
+      if (error.code === '23505') {
+        // Unique violation, append counter and retry
+        finalSlug = `${slug}-${counter}`;
+        counter++;
+      } else {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+    } else {
+      success = true;
+      projectData = data;
+    }
   }
 
-  return NextResponse.json({ data }, { status: 201 })
+  if (!success) {
+    return NextResponse.json({ error: 'Could not generate a unique slug' }, { status: 500 })
+  }
+
+  return NextResponse.json({ data: projectData }, { status: 201 })
 }

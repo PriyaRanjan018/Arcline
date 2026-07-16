@@ -1,45 +1,18 @@
 import type { Metadata } from "next";
-import { Playfair_Display, IBM_Plex_Sans, IBM_Plex_Mono, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import ShellLayout from "@/components/shell/ShellLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import SplashScreen from "@/components/shared/SplashScreen";
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["700", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
-});
-
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  variable: "--font-body",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-mono",
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["700"],
-  style: ["italic"],
-  variable: "--font-logo",
-});
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://arclinee.vercel.app"),
   title: {
-    default: "Arcline Platform",
+    default: "Arcline",
     template: "%s | Arcline",
   },
   description: "Proof of Work. NOT perfection. A brutalist platform for builders.",
   openGraph: {
-    title: "Arcline Platform",
+    title: "Arcline",
     description: "Proof of Work. NOT perfection. A brutalist platform for builders.",
     url: "https://arclinee.vercel.app",
     siteName: "Arcline",
@@ -48,7 +21,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Arcline Platform",
+    title: "Arcline",
     description: "Proof of Work. NOT perfection. A brutalist platform for builders.",
   },
   robots: {
@@ -64,9 +37,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${playfair.variable} ${plexSans.variable} ${plexMono.variable} ${cormorant.variable} bg-bg text-text1 min-h-screen`}
-      >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="bg-bg text-text1 min-h-screen">
         <SplashScreen />
         <AuthProvider>
           <ShellLayout>{children}</ShellLayout>

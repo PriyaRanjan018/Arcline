@@ -85,7 +85,7 @@ export default function HowItWorksPage() {
                     <div className="space-y-2">
                       <div className="h-3 w-20 bg-border" />
                       <div className="h-10 w-full bg-bg border border-border2 flex items-center px-4">
-                        <span className="text-text3 text-sm">e.g., Arcline Platform</span>
+                        <span className="text-text3 text-sm">e.g., Arcline</span>
                       </div>
                     </div>
                     <div className="space-y-2">

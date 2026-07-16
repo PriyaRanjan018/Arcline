@@ -50,7 +50,7 @@ export const mockProjects = [
   {
     id: "arcline",
     builderId: "priya",
-    name: "Arcline Platform",
+    name: "Arcline",
     description: "Proof of Work. NOT perfection. A proof-of-work platform for builders.",
     stage: "BUILDING",
     progress: 45,

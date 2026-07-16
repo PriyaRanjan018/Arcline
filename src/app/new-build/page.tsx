@@ -17,18 +17,18 @@ const STAGES = [
 ];
 
 const CATEGORIES: { label: string; value: string }[] = [
-  { label: "SaaS",        value: "saas"        },
-  { label: "Mobile App",  value: "mobile_app"  },
-  { label: "Startup",     value: "startup"     },
-  { label: "Open Source", value: "open_source" },
-  { label: "AI / ML",     value: "ai_ml"       },
-  { label: "Dev Tool",    value: "dev_tool"     },
-  { label: "Design",      value: "design"       },
-  { label: "Content",     value: "content"      },
-  { label: "Hardware",    value: "hardware"     },
-  { label: "Agency",      value: "agency"       },
-  { label: "Research",    value: "research"     },
-  { label: "Other",       value: "other"        },
+  { label: "SaaS",        value: "SAAS"        },
+  { label: "Mobile App",  value: "MOBILE_APP"  },
+  { label: "Startup",     value: "STARTUP"     },
+  { label: "Open Source", value: "OPEN_SOURCE" },
+  { label: "AI / ML",     value: "AI_ML"       },
+  { label: "Dev Tool",    value: "DEV_TOOL"     },
+  { label: "Design",      value: "DESIGN"       },
+  { label: "Content",     value: "CONTENT"      },
+  { label: "Hardware",    value: "HARDWARE"     },
+  { label: "Agency",      value: "AGENCY"       },
+  { label: "Research",    value: "RESEARCH"     },
+  { label: "Other",       value: "OTHER"        },
 ];
 
 // ── Slug helpers ──────────────────────────────────────────
@@ -144,7 +144,7 @@ export default function NewBuildPage() {
               type="text"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="e.g. Arcline Platform"
+              placeholder="e.g. Arcline"
               maxLength={80}
               className="w-full bg-surface border border-border px-4 py-3 text-text1 font-body text-base
                          placeholder:text-text3 outline-none focus:border-[#E8572A] transition-colors"

@@ -269,7 +269,7 @@ function JourneyMapTab({ entries }: { entries: any[] }) {
       </div>
 
       {/* ── Legend & Summary Dashboard ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.2fr_0.7fr] gap-6 bg-surface border border-border p-6 md:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1.4fr_0.6fr] gap-6 bg-surface border border-border p-6 md:p-8">
         
         {/* Metric 1: Circular Progress Ring */}
         <div className="flex flex-col sm:flex-row items-center gap-6 border-b lg:border-b-0 lg:border-r border-border pb-6 sm:pb-0 sm:pr-6">
