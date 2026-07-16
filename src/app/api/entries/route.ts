@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { ENTRY_TYPES } from '@/lib/enums'
 
 const PAGE_SIZE = 20
 
@@ -10,6 +11,16 @@ export async function GET(req: Request) {
   const type = searchParams.get('type')          // WIN | SETBACK | MILESTONE | REALIZATION
   const cursor = searchParams.get('cursor')       // ISO timestamp for pagination
   const limit = Math.min(Number(searchParams.get('limit') ?? PAGE_SIZE), 50)
+  const username = searchParams.get('username')
+
+  // ── Validate type filter if provided ─────────────────────
+  const normalizedType = type?.toUpperCase()
+  if (normalizedType && !ENTRY_TYPES.includes(normalizedType as typeof ENTRY_TYPES[number])) {
+    return NextResponse.json(
+      { error: `Invalid type. Must be one of: ${ENTRY_TYPES.join(', ')}` },
+      { status: 400 }
+    )
+  }
 
   let query = supabase
     .from('entries')
@@ -22,13 +33,12 @@ export async function GET(req: Request) {
     .limit(limit)
 
   if (projectId) query = query.eq('project_id', projectId)
-  if (type)      query = query.eq('type', type.toUpperCase())
-  const username = searchParams.get('username')
+  if (normalizedType) query = query.eq('type', normalizedType)
   if (username) {
     const { data: profile } = await supabase.from('profiles').select('id').eq('username', username).single()
     if (profile) query = query.eq('user_id', profile.id)
   }
-  if (cursor)    query = query.lt('created_at', cursor)
+  if (cursor) query = query.lt('created_at', cursor)
 
   const { data, error } = await query
 
@@ -49,17 +59,22 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { project_id, type, title, entry_body, day_number, mood } = body
 
-  // Validate required fields
-  if (!project_id || !type || !title || !entry_body) {
-    return NextResponse.json({ error: 'project_id, type, title and body are required' }, { status: 400 })
+  // ── Required fields ───────────────────────────────────────
+  if (!project_id) return NextResponse.json({ error: 'project_id is required' }, { status: 400 })
+  if (!type)       return NextResponse.json({ error: 'type is required' }, { status: 400 })
+  if (!title?.trim()) return NextResponse.json({ error: 'title is required' }, { status: 400 })
+  if (!entry_body?.trim()) return NextResponse.json({ error: 'body is required' }, { status: 400 })
+
+  // ── Enum validation ───────────────────────────────────────
+  const normalizedType = type.toUpperCase()
+  if (!ENTRY_TYPES.includes(normalizedType as typeof ENTRY_TYPES[number])) {
+    return NextResponse.json(
+      { error: `Invalid type. Must be one of: ${ENTRY_TYPES.join(', ')}` },
+      { status: 400 }
+    )
   }
 
-  const VALID_TYPES = ['WIN', 'SETBACK', 'MILESTONE', 'REALIZATION']
-  if (!VALID_TYPES.includes(type)) {
-    return NextResponse.json({ error: 'Invalid entry type' }, { status: 400 })
-  }
-
-  // Rate limit: max 10 entries per user per day
+  // ── Rate limit: max 10 entries per user per day ───────────
   const startOfDay = new Date()
   startOfDay.setHours(0, 0, 0, 0)
   const { count } = await supabase
@@ -72,7 +87,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Rate limit: max 10 entries per day' }, { status: 429 })
   }
 
-  // Verify project belongs to this user
+  // ── Verify project belongs to this user ───────────────────
   const { data: project } = await supabase
     .from('projects')
     .select('id')
@@ -89,7 +104,7 @@ export async function POST(req: Request) {
     .insert({
       project_id,
       user_id: user.id,
-      type,
+      type: normalizedType,
       title: title.trim(),
       body: entry_body.trim(),
       day_number: day_number ?? null,

@@ -13,11 +13,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 
 const STAGE_COLORS: Record<string, string> = {
-  BUILDING:   "#7EB8F5",
-  STRUGGLING: "#FF9800",
-  LAUNCHED:   "#E8572A",
-  PIVOTING:   "#C9A96E",
-  PAUSED:     "#444444",
+  STARTED:      "#C9A96E",
+  BUILDING:     "#7EB8F5",
+  STRUGGLING:   "#FF9800",
+  PIVOTING:     "#C9A96E",
+  BREAKTHROUGH: "#4CAF50",
+  LAUNCHED:     "#E8572A",
+  PAUSED:       "#444444",
+  ABANDONED:    "#333333",
 };
 
 const DIVIDER = <div className="h-[1px] w-full bg-[#222222] my-[12px]" />;

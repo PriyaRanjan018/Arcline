@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { ENTRY_TYPES } from '@/lib/enums'
 
 export async function GET(
   _req: Request,
@@ -32,11 +33,30 @@ export async function PATCH(
   const body = await req.json()
   const { title, entry_body, type, mood } = body
 
+  // ── Enum validation ───────────────────────────────────────
+  if (type !== undefined) {
+    const normalizedType = type.toUpperCase()
+    if (!ENTRY_TYPES.includes(normalizedType as typeof ENTRY_TYPES[number])) {
+      return NextResponse.json(
+        { error: `Invalid type. Must be one of: ${ENTRY_TYPES.join(', ')}` },
+        { status: 400 }
+      )
+    }
+  }
+
+  // ── Build a clean update payload ──────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatePayload: Record<string, any> = { updated_at: new Date().toISOString() }
+  if (title !== undefined)      updatePayload.title = title.trim()
+  if (entry_body !== undefined) updatePayload.body  = entry_body.trim()
+  if (type !== undefined)       updatePayload.type  = type.toUpperCase()
+  if (mood !== undefined)       updatePayload.mood  = mood
+
   const { data, error } = await supabase
     .from('entries')
-    .update({ title, body: entry_body, type, mood, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq('id', params.id)
-    .eq('user_id', user.id) // RLS enforced + explicit check
+    .eq('user_id', user.id) // RLS enforced + explicit owner check
     .select()
     .single()
 

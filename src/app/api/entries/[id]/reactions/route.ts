@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-
-const VALID_REACTIONS = ['FEEL_THIS', 'KEEP_GOING', 'HIT_ME', 'BEEN_HERE']
+import { REACTION_TYPES } from '@/lib/enums'
 
 export async function GET(
   _req: Request,
@@ -9,7 +8,7 @@ export async function GET(
 ) {
   const supabase = createClient()
 
-  // Get reaction counts grouped by type
+  // Get all reaction types for this entry
   const { data, error } = await supabase
     .from('reactions')
     .select('type')
@@ -46,14 +45,22 @@ export async function POST(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { type } = await req.json()
-  if (!VALID_REACTIONS.includes(type)) {
-    return NextResponse.json({ error: 'Invalid reaction type' }, { status: 400 })
+
+  // ── Enum validation ───────────────────────────────────────
+  if (!type || !REACTION_TYPES.includes(type)) {
+    return NextResponse.json(
+      { error: `Invalid reaction type. Must be one of: ${REACTION_TYPES.join(', ')}` },
+      { status: 400 }
+    )
   }
 
-  // Upsert — safe to call even if already reacted (idempotent)
+  // Upsert — idempotent: safe to call even if already reacted
   const { data, error } = await supabase
     .from('reactions')
-    .upsert({ entry_id: params.id, user_id: user.id, type }, { onConflict: 'entry_id,user_id,type' })
+    .upsert(
+      { entry_id: params.id, user_id: user.id, type },
+      { onConflict: 'entry_id,user_id,type' }
+    )
     .select()
     .single()
 
@@ -70,8 +77,13 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { type } = await req.json()
-  if (!VALID_REACTIONS.includes(type)) {
-    return NextResponse.json({ error: 'Invalid reaction type' }, { status: 400 })
+
+  // ── Enum validation ───────────────────────────────────────
+  if (!type || !REACTION_TYPES.includes(type)) {
+    return NextResponse.json(
+      { error: `Invalid reaction type. Must be one of: ${REACTION_TYPES.join(', ')}` },
+      { status: 400 }
+    )
   }
 
   const { error } = await supabase

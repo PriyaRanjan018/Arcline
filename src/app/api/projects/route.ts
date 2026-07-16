@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { PROJECT_CATEGORIES, PROJECT_STAGES } from '@/lib/enums'
 
 export async function GET(req: Request) {
   const supabase = createClient()
@@ -28,16 +29,35 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { title, slug, tagline, description, category, stage } = body
 
-  if (!title || !slug) {
-    return NextResponse.json({ error: 'title and slug are required' }, { status: 400 })
+  // ── Required fields ───────────────────────────────────────
+  if (!title?.trim()) {
+    return NextResponse.json({ error: 'title is required' }, { status: 400 })
+  }
+  if (!slug?.trim()) {
+    return NextResponse.json({ error: 'slug is required' }, { status: 400 })
   }
 
-  // Validate slug: lowercase alphanumeric + hyphens
+  // ── Slug format validation ────────────────────────────────
   if (!/^[a-z0-9-]+$/.test(slug)) {
-    return NextResponse.json({ error: 'slug must be lowercase alphanumeric with hyphens only' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'slug must be lowercase alphanumeric with hyphens only' },
+      { status: 400 }
+    )
   }
 
-  let finalSlug = slug;
+  // ── Enum validation ───────────────────────────────────────
+  if (stage && !PROJECT_STAGES.includes(stage)) {
+    return NextResponse.json(
+      { error: `Invalid stage. Must be one of: ${PROJECT_STAGES.join(', ')}` },
+      { status: 400 }
+    )
+  }
+
+  // Category is optional — if an unrecognised value arrives, just store null
+  const safeCategory = category && PROJECT_CATEGORIES.includes(category) ? category : null;
+
+  // ── Auto-increment slug on collision ─────────────────────
+  let finalSlug = slug.trim();
   let counter = 1;
   let success = false;
   let projectData = null;
@@ -45,14 +65,22 @@ export async function POST(req: Request) {
   while (!success && counter < 50) {
     const { data, error } = await supabase
       .from('projects')
-      .insert({ user_id: user.id, title, slug: finalSlug, tagline, description, category, stage })
+      .insert({
+        user_id: user.id,
+        title: title.trim(),
+        slug: finalSlug,
+        tagline: tagline?.trim() || null,
+        description: description?.trim() || null,
+        category: safeCategory,
+        stage: stage || 'BUILDING',
+      })
       .select()
       .single()
 
     if (error) {
       if (error.code === '23505') {
-        // Unique violation, append counter and retry
-        finalSlug = `${slug}-${counter}`;
+        // Unique constraint violation — try with appended counter
+        finalSlug = `${slug.trim()}-${counter}`;
         counter++;
       } else {
         return NextResponse.json({ error: error.message }, { status: 500 })
@@ -64,7 +92,7 @@ export async function POST(req: Request) {
   }
 
   if (!success) {
-    return NextResponse.json({ error: 'Could not generate a unique slug' }, { status: 500 })
+    return NextResponse.json({ error: 'Could not generate a unique slug after 50 attempts' }, { status: 500 })
   }
 
   return NextResponse.json({ data: projectData }, { status: 201 })

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { PROJECT_STAGES } from '@/lib/enums'
 
 export async function GET(
   _req: Request,
@@ -31,9 +32,27 @@ export async function PATCH(
   const body = await req.json()
   const { title, tagline, description, stage, is_public, is_pinned } = body
 
+  // ── Enum validation ───────────────────────────────────────
+  if (stage !== undefined && !PROJECT_STAGES.includes(stage)) {
+    return NextResponse.json(
+      { error: `Invalid stage. Must be one of: ${PROJECT_STAGES.join(', ')}` },
+      { status: 400 }
+    )
+  }
+
+  // ── Build a clean update payload — never pass undefined fields ──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatePayload: Record<string, any> = { updated_at: new Date().toISOString() }
+  if (title !== undefined)      updatePayload.title       = title.trim()
+  if (tagline !== undefined)    updatePayload.tagline     = tagline?.trim() || null
+  if (description !== undefined) updatePayload.description = description?.trim() || null
+  if (stage !== undefined)      updatePayload.stage       = stage
+  if (is_public !== undefined)  updatePayload.is_public   = is_public
+  if (is_pinned !== undefined)  updatePayload.is_pinned   = is_pinned
+
   const { data, error } = await supabase
     .from('projects')
-    .update({ title, tagline, description, stage, is_public, is_pinned, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq('id', params.id)
     .eq('user_id', user.id)
     .select()

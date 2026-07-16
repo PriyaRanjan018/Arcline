@@ -9,26 +9,21 @@ import { Rocket, Wrench, AlertTriangle, Repeat, PauseCircle, CheckCircle2, Arrow
 
 // ── Constants ──────────────────────────────────────────────
 const STAGES = [
-  { id: "BUILDING",   label: "Building",   icon: Wrench,        desc: "Actively working on it",         color: "#7EB8F5" },
-  { id: "LAUNCHED",   label: "Launched",   icon: Rocket,        desc: "Shipped and live",                color: "#E8572A" },
-  { id: "STRUGGLING", label: "Struggling", icon: AlertTriangle, desc: "Hitting walls, pushing through",  color: "#FF9800" },
-  { id: "PIVOTING",   label: "Pivoting",   icon: Repeat,        desc: "Changing direction",              color: "#C9A96E" },
-  { id: "PAUSED",     label: "Paused",     icon: PauseCircle,   desc: "Taking a break",                  color: "#666666" },
+  { id: "BUILDING",     label: "Building",     icon: Wrench,        desc: "Actively working on it",          color: "#7EB8F5" },
+  { id: "STARTED",      label: "Just Started",  icon: Rocket,        desc: "Early days, just beginning",       color: "#C9A96E" },
+  { id: "STRUGGLING",   label: "Struggling",   icon: AlertTriangle, desc: "Hitting walls, pushing through",   color: "#FF9800" },
+  { id: "PIVOTING",     label: "Pivoting",     icon: Repeat,        desc: "Changing direction",               color: "#C9A96E" },
+  { id: "BREAKTHROUGH", label: "Breakthrough", icon: Rocket,        desc: "Major breakthrough achieved",      color: "#4CAF50" },
+  { id: "LAUNCHED",     label: "Launched",     icon: Rocket,        desc: "Shipped and live",                 color: "#E8572A" },
+  { id: "PAUSED",       label: "Paused",       icon: PauseCircle,   desc: "Taking a break",                  color: "#666666" },
+  { id: "ABANDONED",    label: "Abandoned",    icon: AlertTriangle, desc: "No longer working on it",          color: "#444444" },
 ];
 
 const CATEGORIES: { label: string; value: string }[] = [
-  { label: "SaaS",        value: "SAAS"        },
-  { label: "Mobile App",  value: "MOBILE_APP"  },
-  { label: "Startup",     value: "STARTUP"     },
-  { label: "Open Source", value: "OPEN_SOURCE" },
-  { label: "AI / ML",     value: "AI_ML"       },
-  { label: "Dev Tool",    value: "DEV_TOOL"     },
-  { label: "Design",      value: "DESIGN"       },
-  { label: "Content",     value: "CONTENT"      },
-  { label: "Hardware",    value: "HARDWARE"     },
-  { label: "Agency",      value: "AGENCY"       },
-  { label: "Research",    value: "RESEARCH"     },
-  { label: "Other",       value: "OTHER"        },
+  { label: "Startup",       value: "STARTUP"        },
+  { label: "College Project",value: "COLLEGE_PROJECT" },
+  { label: "Personal Build", value: "PERSONAL_BUILD"  },
+  { label: "Open Source",    value: "OPEN_SOURCE"     },
 ];
 
 // ── Slug helpers ──────────────────────────────────────────
