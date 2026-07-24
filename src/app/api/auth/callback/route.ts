@@ -17,22 +17,32 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      // Check if user has a profile (has completed onboarding)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .eq('id', user.id)
-          .single()
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error && sessionData.session) {
+      const { user, session } = sessionData
 
-        // New user — no profile yet → go to onboarding
-        if (!profile || !profile.username) {
-          return NextResponse.redirect(`${origin}/onboarding`)
-        }
+      // ── Single-session enforcement ──────────────────────────────────────────
+      // Stamp this session's access_token as the only valid session for this user.
+      // Any other browser/device subscribed via Realtime will detect this change
+      // and immediately sign out.
+      await supabase
+        .from('profiles')
+        .update({ active_session_id: session.access_token })
+        .eq('id', user.id)
+      // ────────────────────────────────────────────────────────────────────────
+
+      // Check if user has a profile (has completed onboarding)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('id', user.id)
+        .single()
+
+      // New user — no profile yet → go to onboarding
+      if (!profile || !profile.username) {
+        return NextResponse.redirect(`${origin}/onboarding`)
       }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

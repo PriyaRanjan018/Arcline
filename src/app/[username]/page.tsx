@@ -31,7 +31,7 @@ import MessageDrawer from "@/components/shared/MessageDrawer";
 import BuildHeatmap from "@/components/shared/BuildHeatmap";
 
 
-const TABS = ["Build Logs", "Progress", "About"];
+const TABS = ["Build Logs", "Progress"];
 
 // ─── Journey Momentum Score (JMS) ──────────────────────────────────────────────
 // Philosophy: every entry type is a positive contribution.
@@ -290,34 +290,7 @@ function BuildPulseTab({ builder, entries }: { builder: any, entries: any[] }) {
 }
 
 
-// ─── About Tab ────────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function AboutTab({ builder, entries }: { builder: any, entries: any[] }) {
-  return (
-    <div className="space-y-10 max-w-2xl">
-      <div>
-        <h2 className="text-lg font-display font-bold mb-3">About</h2>
-        <p className="text-text2 leading-relaxed">{builder.bio || "No bio yet."}</p>
-      </div>
 
-      <div className="bg-surface2 border border-border2 p-6">
-        <h2 className="text-xs font-mono uppercase tracking-widest text-text3 mb-4">Stats</h2>
-        <div className="grid grid-cols-3 gap-6">
-          {[
-            { label: "Followers",  value: builder.followers },
-            { label: "Following",  value: builder.following },
-            { label: "Total Entries", value: builder.entry_count || entries.length },
-          ].map(stat => (
-            <div key={stat.label}>
-              <div className="text-2xl font-mono text-text1">{stat.value}</div>
-              <div className="text-[10px] uppercase tracking-widest text-text3 font-mono mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapEntryToCardShape(dbEntry: any) {
@@ -353,10 +326,7 @@ function ArchivesTab({ drafts, setDrafts }: { drafts: any[], setDrafts: any }) {
   if (drafts.length === 0) {
     return (
       <div className="border border-dashed border-border2 p-16 text-center">
-        <p className="text-text3 font-mono text-sm">No drafts yet.</p>
-        <Link href="/new-entry" className="inline-block mt-4">
-          <Button size="sm">Log a new entry</Button>
-        </Link>
+        <p className="text-text3 font-mono text-sm">No archived entries found.</p>
       </div>
     );
   }
@@ -437,7 +407,7 @@ function MockProfileView({ builder, projects, entries }: {
       <div className="sticky top-[48px] z-30 bg-[rgba(8,8,8,0.90)] backdrop-blur-[12px] border-b border-border">
         <div className="max-w-5xl mx-auto w-full px-4 md:px-8">
           <div className="flex gap-0">
-            {["Build Logs", "About"].map((tab) => (
+            {["Build Logs"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -467,12 +437,7 @@ function MockProfileView({ builder, projects, entries }: {
             )}
           </div>
         )}
-        {activeTab === "About" && (
-          <div className="max-w-lg">
-            <h2 className="font-display font-bold text-lg mb-3">About</h2>
-            <p className="font-body font-light text-text2 text-sm leading-relaxed">{builder.bio}</p>
-          </div>
-        )}
+
       </div>
     </PageTransition>
   );
@@ -486,7 +451,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
 
   const tabParam = searchParams.get("tab");
   const initialTab =
-    tabParam === "progress" || tabParam === "map" ? "Progress" : tabParam === "about" ? "About" : "Build Logs";
+    tabParam === "progress" || tabParam === "map" ? "Progress" : "Build Logs";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -501,6 +466,9 @@ function ProfileContent({ params }: { params: { username: string } }) {
   const [isMsgOpen, setIsMsgOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [drafts, setDrafts] = useState<any[]>([]);
+  // Holds the builder ID once profile is fetched, so the follow-check
+  // can run independently without re-fetching the whole profile.
+  const [builderId, setBuilderId] = useState<string | null>(null);
 
   const isOwner = user?.id === builder?.id;
 
@@ -515,6 +483,9 @@ function ProfileContent({ params }: { params: { username: string } }) {
     }
   }, [isOwner]);
 
+  // ── Fetch public profile data immediately — does NOT wait for auth ──────────
+  // Profile/entry data is public. We fetch it the moment the component mounts
+  // so the page renders in ~300ms instead of waiting 2-3s for auth to resolve.
   useEffect(() => {
     async function loadProfile() {
       setIsLoading(true);
@@ -523,22 +494,15 @@ function ProfileContent({ params }: { params: { username: string } }) {
           fetch(`/api/profile/${params.username}`),
           fetch(`/api/journal?username=${params.username}`)
         ]);
-        
+
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           const builderData = profileData.data.profile;
           setBuilder(builderData);
           setProjects(profileData.data.projects);
-
-          if (user) {
-            const checkRes = await fetch(`/api/follows/users/check?following_id=${builderData.id}`);
-            if (checkRes.ok) {
-              const checkData = await checkRes.json();
-              setIsFollowing(checkData.isFollowing);
-            }
-          }
+          setBuilderId(builderData.id);
         }
-        
+
         if (entriesRes.ok) {
           const entriesData = await entriesRes.json();
           setEntries(entriesData.data.map(mapEntryToCardShape));
@@ -550,14 +514,25 @@ function ProfileContent({ params }: { params: { username: string } }) {
       }
     }
     loadProfile();
-  }, [params.username, user]);
+  // Only re-run if username changes (navigating between profiles).
+  // Intentionally excludes `user` — auth state does not gate public data.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.username]);
+
+  // ── Follow-check runs separately, only once both user + builderId are known ──
+  useEffect(() => {
+    if (!user || !builderId) return;
+    fetch(`/api/follows/users/check?following_id=${builderId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setIsFollowing(data.isFollowing); })
+      .catch(() => {});
+  }, [user, builderId]);
 
 
   function handleTabChange(tab: string) {
     setActiveTab(tab);
     const paramMap: Record<string, string> = {
       "Progress":    "progress",
-      "About":       "about",
       "Build Logs":  "logs",
       "Archives":    "archives",
     };
@@ -604,7 +579,46 @@ function ProfileContent({ params }: { params: { username: string } }) {
   };
 
   if (isLoading) {
-    return <div className="p-16 text-center text-text3 font-mono animate-pulse">Loading profile...</div>;
+    return (
+      <div className="flex flex-col min-h-[calc(100vh-48px)] animate-pulse">
+        {/* Header skeleton */}
+        <div className="bg-surface border-b border-border p-6 md:p-12">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+            {/* Avatar */}
+            <div className="w-20 h-20 bg-surface2 rounded-full shrink-0" />
+            <div className="flex-1 w-full">
+              {/* Name */}
+              <div className="h-8 bg-surface2 w-48 mb-2" />
+              {/* Username */}
+              <div className="h-3 bg-surface2 w-32 mb-3" />
+              {/* Bio lines */}
+              <div className="h-3 bg-surface2 w-full max-w-sm mb-1.5" />
+              <div className="h-3 bg-surface2 w-4/5 max-w-xs mb-1.5" />
+              <div className="h-3 bg-surface2 w-3/5 max-w-[200px] mb-5" />
+              {/* Stats */}
+              <div className="flex gap-6">
+                <div className="h-8 w-12 bg-surface2" />
+                <div className="h-8 w-12 bg-surface2" />
+                <div className="h-8 w-12 bg-surface2" />
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Tab bar skeleton */}
+        <div className="border-b border-border">
+          <div className="max-w-5xl mx-auto px-4 md:px-8 flex gap-8 pt-4 pb-3">
+            <div className="h-3 w-20 bg-surface2" />
+            <div className="h-3 w-16 bg-surface2" />
+            <div className="h-3 w-12 bg-surface2" />
+          </div>
+        </div>
+        {/* Content skeleton */}
+        <div className="max-w-5xl mx-auto w-full px-4 md:px-8 py-8 flex flex-col gap-4">
+          <div className="h-40 bg-surface2 w-full" />
+          <div className="h-40 bg-surface2 w-full" />
+        </div>
+      </div>
+    );
   }
 
   if (!builder) {
@@ -757,7 +771,6 @@ function ProfileContent({ params }: { params: { username: string } }) {
               { label: "Build Logs",   count: projects.length,                         key: "Build Logs"   },
               { label: "Progress",  count: entries.length,                           key: "Progress"  },
               ...(isOwner ? [{ label: "Archives", count: drafts.length, key: "Archives" }] : []),
-              { label: "About",        count: null,                                     key: "About"        },
             ].map((tab) => {
               const isActive = tab.key === activeTab;
               return (
@@ -857,7 +870,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
 
         {activeTab === "Archives" && isOwner && <ArchivesTab drafts={drafts} setDrafts={setDrafts} />}
 
-        {activeTab === "About" && <AboutTab builder={builder} entries={entries} />}
+
       </div>
     </PageTransition>
   );
