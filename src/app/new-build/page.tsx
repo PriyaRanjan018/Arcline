@@ -2,28 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import PageTransition from "@/components/shared/PageTransition";
 import Button from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
-import { Rocket, Wrench, AlertTriangle, Repeat, PauseCircle, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+import { Rocket, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 // ── Constants ──────────────────────────────────────────────
-const STAGES = [
-  { id: "BUILDING",     label: "Building",     icon: Wrench,        desc: "Actively working on it",          color: "#7EB8F5" },
-  { id: "STARTED",      label: "Just Started",  icon: Rocket,        desc: "Early days, just beginning",       color: "#C9A96E" },
-  { id: "STRUGGLING",   label: "Struggling",   icon: AlertTriangle, desc: "Hitting walls, pushing through",   color: "#FF9800" },
-  { id: "PIVOTING",     label: "Pivoting",     icon: Repeat,        desc: "Changing direction",               color: "#C9A96E" },
-  { id: "BREAKTHROUGH", label: "Breakthrough", icon: Rocket,        desc: "Major breakthrough achieved",      color: "#4CAF50" },
-  { id: "LAUNCHED",     label: "Launched",     icon: Rocket,        desc: "Shipped and live",                 color: "#E8572A" },
-  { id: "PAUSED",       label: "Paused",       icon: PauseCircle,   desc: "Taking a break",                  color: "#666666" },
-  { id: "ABANDONED",    label: "Abandoned",    icon: AlertTriangle, desc: "No longer working on it",          color: "#444444" },
+const CATEGORIES: { label: string; value: string }[] = [
+  { label: "Startup",        value: "STARTUP"        },
+  { label: "College Project", value: "COLLEGE_PROJECT" },
+  { label: "Personal Build",  value: "PERSONAL_BUILD"  },
+  { label: "Open Source",     value: "OPEN_SOURCE"     },
 ];
 
-const CATEGORIES: { label: string; value: string }[] = [
-  { label: "Startup",       value: "STARTUP"        },
-  { label: "College Project",value: "COLLEGE_PROJECT" },
-  { label: "Personal Build", value: "PERSONAL_BUILD"  },
-  { label: "Open Source",    value: "OPEN_SOURCE"     },
+const ENTRY_TYPES = [
+  { id: "REALIZATION", label: "Realization", color: "var(--realization)", textClass: "text-realization border-realization" },
+  { id: "WIN",         label: "Win",         color: "var(--win)",         textClass: "text-win border-win"                 },
+  { id: "SETBACK",     label: "Setback",     color: "var(--setback)",     textClass: "text-setback border-setback"         },
+  { id: "MILESTONE",   label: "Milestone",   color: "var(--milestone)",   textClass: "text-milestone border-milestone"     },
 ];
 
 // ── Slug helpers ──────────────────────────────────────────
@@ -40,20 +37,24 @@ function toSlug(str: string) {
 // ── Page ──────────────────────────────────────────────────
 export default function NewBuildPage() {
   const router = useRouter();
+  const { profile } = useAuth();
 
-  const [step, setStep]           = useState<1 | 2 | 3>(1);
-  const [title, setTitle]         = useState("");
-  const [slug, setSlug]           = useState("");
+  const [step, setStep]             = useState<1 | 2 | 3>(1);
+  const [title, setTitle]           = useState("");
+  const [slug, setSlug]             = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
-  const [tagline, setTagline]     = useState("");
-  const [description, setDesc]    = useState("");
-  const [category, setCategory]   = useState("");
-  const [stage, setStage]         = useState("BUILDING");
+  const [tagline, setTagline]       = useState("");
+  const [description, setDesc]      = useState("");
+  const [category, setCategory]     = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError]         = useState("");
-  const [done, setDone]           = useState(false);
+  const [error, setError]           = useState("");
+  const [done, setDone]             = useState(false);
 
-  // Auto-generate slug from title unless user has manually edited it
+  // Step 3 — first entry state
+  const [entryType, setEntryType]   = useState("REALIZATION");
+  const [entryTitle, setEntryTitle] = useState("");
+  const [entryBody, setEntryBody]   = useState("");
+
   function handleTitleChange(v: string) {
     setTitle(v);
     if (!slugEdited) setSlug(toSlug(v));
@@ -68,27 +69,55 @@ export default function NewBuildPage() {
     setSubmitting(true);
     setError("");
 
-    // Only send optional fields if they have a value — avoids enum errors on empty strings
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload: Record<string, any> = { title, slug, stage };
+    const payload: Record<string, any> = {
+      title,
+      slug,
+      stage: "STARTED", // always default — no longer user-selected
+    };
     if (tagline.trim())     payload.tagline     = tagline.trim();
     if (description.trim()) payload.description = description.trim();
     if (category)           payload.category    = category;
 
-    const res = await fetch("/api/projects", {
+    // 1. Create project
+    const projectRes = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
-    if (!res.ok) {
-      setError(json.error || "Something went wrong.");
+    const projectJson = await projectRes.json();
+    if (!projectRes.ok) {
+      setError(projectJson.error || "Failed to create project.");
       setSubmitting(false);
       return;
     }
+
+    const projectId   = projectJson.data.id;
+    const projectSlug = projectJson.data.slug;
+
+    // 2. Log first entry (if title + body are filled)
+    if (entryTitle.trim() && entryBody.trim()) {
+      const entryRes = await fetch("/api/journal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: projectId,
+          type: entryType,
+          title: entryTitle.trim(),
+          entry_body: entryBody.trim(),
+        }),
+      });
+      if (!entryRes.ok) {
+        // Project was created — don't block, just note it
+        const entryJson = await entryRes.json();
+        console.warn("First entry failed:", entryJson.error);
+      }
+    }
+
     setDone(true);
-    // Brief success pause, then go log an entry
-    setTimeout(() => router.push("/new-entry"), 1400);
+    // Redirect to the project's build log
+    const username = profile?.username || "";
+    setTimeout(() => router.push(username ? `/${username}/${projectSlug}` : "/dashboard"), 1200);
   }
 
   // ── Success screen ──────────────────────────────────────
@@ -97,7 +126,7 @@ export default function NewBuildPage() {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-48px)] gap-6">
         <CheckCircle2 className="w-12 h-12 text-[#E8572A]" />
         <h2 className="text-2xl font-display font-bold">Project created.</h2>
-        <p className="text-text2 text-sm">Taking you to log your first entry…</p>
+        <p className="text-text2 text-sm">Taking you to your build log…</p>
       </div>
     );
   }
@@ -113,12 +142,12 @@ export default function NewBuildPage() {
         <h1 className="text-3xl font-display font-bold">
           {step === 1 && "Name your build"}
           {step === 2 && "Tell its story"}
-          {step === 3 && "Pick a stage"}
+          {step === 3 && "Kick it off with an entry"}
         </h1>
         <p className="text-text3 text-sm mt-2">
           {step === 1 && "Every build needs a name and a handle."}
           {step === 2 && "A one-liner and optional context go a long way."}
-          {step === 3 && "Where are you right now?"}
+          {step === 3 && "What's happening right now? This becomes your Day 1."}
         </p>
 
         {/* Progress bar */}
@@ -146,11 +175,7 @@ export default function NewBuildPage() {
             />
           </Field>
 
-          <Field
-            label="Slug"
-            hint={`arcline.so/you/${slug || "your-slug"}`}
-            required
-          >
+          <Field label="Slug" hint={`arcline.so/you/${slug || "your-slug"}`} required>
             <div className="flex items-center border border-border focus-within:border-[#E8572A] transition-colors bg-surface">
               <span className="px-3 text-text3 font-mono text-sm select-none border-r border-border h-full py-3">
                 /
@@ -243,43 +268,60 @@ export default function NewBuildPage() {
         </div>
       )}
 
-      {/* ── Step 3: Stage ───────────────────────────────── */}
+      {/* ── Step 3: First Entry ──────────────────────────── */}
       {step === 3 && (
         <div className="flex flex-col gap-6">
-          <div className="grid gap-3">
-            {STAGES.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setStage(s.id)}
-                className={cn(
-                  "w-full text-left border p-4 flex items-center gap-4 group transition-all",
-                  stage === s.id
-                    ? "border-[#E8572A] bg-surface2"
-                    : "border-border bg-surface hover:border-[#E8572A]/40"
-                )}
-              >
-                <div
-                  className="w-9 h-9 flex items-center justify-center flex-shrink-0 border"
-                  style={{
-                    borderColor: stage === s.id ? s.color : "#333",
-                    backgroundColor: stage === s.id ? `${s.color}15` : "transparent",
-                  }}
+
+          {/* Entry type selector */}
+          <div>
+            <label className="text-xs font-mono uppercase tracking-widest text-text3 mb-3 block">
+              Entry type
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {ENTRY_TYPES.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setEntryType(type.id)}
+                  className={cn(
+                    "py-3 px-4 border text-xs font-mono tracking-widest transition-all",
+                    entryType === type.id
+                      ? cn(type.textClass, "bg-surface2")
+                      : "border-border2 text-text2 hover:border-text3 hover:bg-surface"
+                  )}
                 >
-                  <s.icon
-                    className="w-4 h-4 transition-colors"
-                    style={{ color: stage === s.id ? s.color : "#666" }}
-                  />
-                </div>
-                <div>
-                  <div className="font-mono text-sm font-medium text-text1">{s.label}</div>
-                  <div className="font-body text-xs text-text3 mt-0.5">{s.desc}</div>
-                </div>
-                {stage === s.id && (
-                  <CheckCircle2 className="w-4 h-4 ml-auto text-[#E8572A]" />
-                )}
-              </button>
-            ))}
+                  {type.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Entry title */}
+          <Field label="Entry title" required>
+            <input
+              autoFocus
+              type="text"
+              value={entryTitle}
+              onChange={(e) => setEntryTitle(e.target.value)}
+              placeholder="What's the situation right now?"
+              maxLength={140}
+              className="w-full bg-surface border border-border px-4 py-3 text-text1 font-body text-base
+                         placeholder:text-text3 outline-none focus:border-[#E8572A] transition-colors"
+            />
+          </Field>
+
+          {/* Entry body */}
+          <Field label="Entry body" required>
+            <textarea
+              value={entryBody}
+              onChange={(e) => setEntryBody(e.target.value)}
+              placeholder="Describe where you are and what you're building. Don't hold back."
+              rows={6}
+              maxLength={2000}
+              className="w-full bg-surface border border-border px-4 py-3 text-text1 font-body text-sm
+                         placeholder:text-text3 outline-none resize-none focus:border-[#E8572A] transition-colors leading-relaxed"
+            />
+            <p className="text-[10px] font-mono text-text3 mt-1 text-right">{entryBody.length}/2000</p>
+          </Field>
 
           {error && (
             <p className="text-[#FF5252] font-mono text-xs border border-[#FF5252]/30 bg-[#FF525210] px-4 py-3">
@@ -296,10 +338,10 @@ export default function NewBuildPage() {
             </button>
             <Button
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !entryTitle.trim() || !entryBody.trim()}
               className="flex items-center gap-2"
             >
-              {submitting ? "Creating…" : "Create project"}
+              {submitting ? "Creating…" : "Create Project + Log Entry"}
               {!submitting && <Rocket className="w-4 h-4" />}
             </Button>
           </div>

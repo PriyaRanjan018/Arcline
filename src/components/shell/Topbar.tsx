@@ -34,7 +34,7 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
     // 1. Initial check for unread notifications
     async function checkUnread() {
       try {
-        const res = await fetch("/api/notifications?unread=true");
+        const res = await fetch("/api/alerts?unread=true");
         if (res.ok) {
           const json = await res.json();
           setHasUnread(json.data && json.data.length > 0);

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-/** GET /api/notifications — user's notifications, newest first */
+/** GET /api/alerts — user's notifications, newest first */
 export async function GET(req: Request) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ data })
 }
 
-/** PATCH /api/notifications — mark notifications as read */
+/** PATCH /api/alerts — mark notifications as read */
 export async function PATCH(req: Request) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()

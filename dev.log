@@ -1,0 +1,451 @@
+
+> arcline-app@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.5s
+ ✓ Compiled /src/middleware in 172ms (127 modules)
+ ✓ Compiled /api/entries in 351ms (121 modules)
+ POST /api/entries 401 in 424ms
+ ✓ Compiled /api/notifications in 121ms (120 modules)
+ GET /api/notifications?unread=true 200 in 2760ms
+ GET /api/notifications?unread=true 200 in 2696ms
+ ✓ Compiled in 344ms (330 modules)
+ ✓ Compiled in 85ms (330 modules)
+ ✓ Compiled in 45ms (127 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (102kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (244kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ○ Compiling /[username]/[project] ...
+ ✓ Compiled /[username]/[project] in 1835ms (1584 modules)
+ ✓ Compiled in 459ms (782 modules)
+ POST /api/entries 200 in 2571ms
+ ✓ Compiled /api/journal in 209ms (121 modules)
+ GET /api/journal 200 in 4668ms
+ ○ Compiling /new-entry ...
+ ✓ Compiled /new-entry in 545ms (1563 modules)
+ GET /new-entry 200 in 693ms
+ ✓ Compiled /_not-found in 272ms (1566 modules)
+ GET /_next/static/chunks/main-app.js?v=1784212464382 404 in 373ms
+ ✓ Compiled /icon.svg in 151ms (823 modules)
+ GET /icon.svg?e8efd1cbc7348a28 200 in 185ms
+ GET /new-entry 200 in 73ms
+ GET /_next/static/chunks/main-app.js?v=1784212477117 404 in 24ms
+ GET /icon.svg?e8efd1cbc7348a28 200 in 8ms
+ ○ Compiling /[username] ...
+ ✓ Compiled /[username] in 630ms (1640 modules)
+ ⨯ Error: Cannot find module './vendor-chunks/next.js'
+Require stack:
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js:203:28) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js'
+  ],
+  page: '/new-entry'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 788ms (1866 modules)
+ GET /new-entry 500 in 1674ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js:203:28) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js'
+  ],
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 205ms
+ GET /new-entry 200 in 107ms
+ GET /_next/static/css/app/layout.css?v=1784212494584 404 in 45ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 47ms
+ GET /_next/static/chunks/main-app.js?v=1784212494584 404 in 48ms
+ GET /_next/static/chunks/app/layout.js 404 in 47ms
+ GET /_next/static/chunks/app/not-found.js 404 in 45ms
+ GET /_next/static/chunks/app/new-entry/page.js 404 in 47ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js:203:28) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js'
+  ],
+  page: '/icon.svg'
+}
+ GET /icon.svg?e8efd1cbc7348a28 500 in 172ms
+ GET /new-entry 200 in 16ms
+ GET /_next/static/css/app/layout.css?v=1784212502504 404 in 38ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 50ms
+ GET /_next/static/chunks/main-app.js?v=1784212502504 404 in 51ms
+ GET /_next/static/chunks/app/new-entry/page.js 404 in 53ms
+ GET /_next/static/chunks/app/layout.js 404 in 54ms
+ GET /_next/static/chunks/app/not-found.js 404 in 46ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js:203:28) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js'
+  ],
+  page: '/icon.svg'
+}
+ GET /icon.svg?e8efd1cbc7348a28 500 in 164ms
+ ✓ Compiled / in 400ms (1872 modules)
+ GET / 200 in 507ms
+ GET /_next/static/css/app/layout.css?v=1784212507741 404 in 39ms
+ GET /_next/static/chunks/main-app.js?v=1784212507741 404 in 39ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 39ms
+ GET /_next/static/chunks/app/layout.js 404 in 39ms
+ GET /_next/static/chunks/app/not-found.js 404 in 20ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js
+- /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js:203:28) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/webpack-runtime.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/[username]/page.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/dev/static-paths-worker.js',
+    '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/compiled/jest-worker/processChild.js'
+  ],
+  page: '/icon.svg'
+}
+ GET /icon.svg?e8efd1cbc7348a28 500 in 166ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/notifications'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/notifications/route' in /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/notifications/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/notifications/route' in '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/notifications/route (expected /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/notifications/route.js)
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/entries/route' in /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/entries/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/entries/route' in '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/entries/route (expected /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/entries/route.js)
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+ ✓ Compiled in 240ms (1026 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/notifications'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/notifications/route' in /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/notifications/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/notifications/route' in '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/notifications/route (expected /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/notifications/route.js)
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/entries/route' in /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/entries/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/entries/route' in '/home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/entries/route (expected /home/honey_badger/Code/Lab/scratch/Arcline/.next/server/app/api/entries/route.js)
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/require.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /home/honey_badger/Code/Lab/scratch/Arcline/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+ ✓ Compiled in 674ms (991 modules)
+ ⨯ ./src/app/[username]/page.tsx
+Error: 
+  [31mx[0m the name `isOwner` is defined multiple times
+     ,-[[36;1;4m/home/honey_badger/Code/Lab/scratch/Arcline/src/app/[username]/page.tsx[0m:529:1]
+ [2m529[0m |   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ [2m530[0m |   const [drafts, setDrafts] = useState<any[]>([]);
+ [2m531[0m | 
+ [2m532[0m |   const isOwner = user?.id === builder?.id;
+     : [31;1m        ^^^|^^^[0m
+     :            [31;1m`-- [31;1mprevious definition of `isOwner` here[0m[0m
+ [2m533[0m | 
+ [2m534[0m |   useEffect(() => {
+ [2m535[0m |     if (isOwner) {
+ [2m536[0m |       const saved = localStorage.getItem("arcline_drafts");
+ [2m537[0m |       if (saved) {
+ [2m538[0m |         try {
+ [2m539[0m |           setDrafts(JSON.parse(saved));
+ [2m540[0m |         } catch (e) {}
+ [2m541[0m |       }
+ [2m542[0m |     }
+ [2m543[0m |   }, [isOwner]);
+ [2m544[0m | 
+ [2m545[0m |   useEffect(() => {
+ [2m546[0m |     async function loadProfile() {
+ [2m547[0m |       setIsLoading(true);
+ [2m548[0m |       try {
+ [2m549[0m |         const [profileRes, entriesRes] = await Promise.all([
+ [2m550[0m |           fetch(`/api/profile/${params.username}`),
+ [2m551[0m |           fetch(`/api/journal?username=${params.username}`)
+ [2m552[0m |         ]);
+ [2m553[0m |         
+ [2m554[0m |         if (profileRes.ok) {
+ [2m555[0m |           const profileData = await profileRes.json();
+ [2m556[0m |           const builderData = profileData.data.profile;
+ [2m557[0m |           setBuilder(builderData);
+ [2m558[0m |           setProjects(profileData.data.projects);
+ [2m559[0m | 
+ [2m560[0m |           if (user) {
+ [2m561[0m |             const checkRes = await fetch(`/api/follows/users/check?following_id=${builderData.id}`);
+ [2m562[0m |             if (checkRes.ok) {
+ [2m563[0m |               const checkData = await checkRes.json();
+ [2m564[0m |               setIsFollowing(checkData.isFollowing);
+ [2m565[0m |             }
+ [2m566[0m |           }
+ [2m567[0m |         }
+ [2m568[0m |         
+ [2m569[0m |         if (entriesRes.ok) {
+ [2m570[0m |           const entriesData = await entriesRes.json();
+ [2m571[0m |           setEntries(entriesData.data.map(mapEntryToCardShape));
+ [2m572[0m |         }
+ [2m573[0m |       } catch (err) {
+ [2m574[0m |         console.error(err);
+ [2m575[0m |       } finally {
+ [2m576[0m |         setIsLoading(false);
+ [2m577[0m |       }
+ [2m578[0m |     }
+ [2m579[0m |     loadProfile();
+ [2m580[0m |   }, [params.username, user]);
+ [2m581[0m | 
+ [2m582[0m |   const isOwner = user?.id === builder?.id;
+     : [33;1m        ^^^|^^^[0m
+     :            [33;1m`-- [33;1m`isOwner` redefined here[0m[0m
+ [2m583[0m | 
+ [2m584[0m |   function handleTabChange(tab: string) {
+ [2m585[0m |     setActiveTab(tab);
+     `----
+
+Import trace for requested module:
+./src/app/[username]/page.tsx
+ ⨯ ./src/app/[username]/page.tsx
+Error: 
+  [31mx[0m Expression expected
+     ,-[[36;1;4m/home/honey_badger/Code/Lab/scratch/Arcline/src/app/[username]/page.tsx[0m:413:1]
+ [2m413[0m |   };
+ [2m414[0m | }
+ [2m415[0m | 
+ [2m416[0m | }
+     : [31;1m^[0m
+ [2m417[0m | 
+ [2m418[0m | // ─── Archives Tab ─────────────────────────────────────────────────────────────
+ [2m419[0m | // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/[username]/page.tsx
+ ⨯ ./src/app/[username]/page.tsx
+Error: 
+  [31mx[0m the name `isOwner` is defined multiple times
+     ,-[[36;1;4m/home/honey_badger/Code/Lab/scratch/Arcline/src/app/[username]/page.tsx[0m:574:1]
+ [2m574[0m |   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ [2m575[0m |   const [drafts, setDrafts] = useState<any[]>([]);
+ [2m576[0m | 
+ [2m577[0m |   const isOwner = user?.id === builder?.id;
+     : [31;1m        ^^^|^^^[0m
+     :            [31;1m`-- [31;1mprevious definition of `isOwner` here[0m[0m
+ [2m578[0m | 
+ [2m579[0m |   useEffect(() => {
+ [2m580[0m |     if (isOwner) {
+ [2m581[0m |       const saved = localStorage.getItem("arcline_drafts");
+ [2m582[0m |       if (saved) {
+ [2m583[0m |         try {
+ [2m584[0m |           setDrafts(JSON.parse(saved));
+ [2m585[0m |         } catch (e) {}
+ [2m586[0m |       }
+ [2m587[0m |     }
+ [2m588[0m |   }, [isOwner]);
+ [2m589[0m | 
+ [2m590[0m |   useEffect(() => {
+ [2m591[0m |     async function loadProfile() {
+ [2m592[0m |       setIsLoading(true);
+ [2m593[0m |       try {
+ [2m594[0m |         const [profileRes, entriesRes] = await Promise.all([
+ [2m595[0m |           fetch(`/api/profile/${params.username}`),
+ [2m596[0m |           fetch(`/api/journal?username=${params.username}`)
+ [2m597[0m |         ]);
+ [2m598[0m |         
+ [2m599[0m |         if (profileRes.ok) {
+ [2m600[0m |           const profileData = await profileRes.json();
+ [2m601[0m |           const builderData = profileData.data.profile;
+ [2m602[0m |           setBuilder(builderData);
+ [2m603[0m |           setProjects(profileData.data.projects);
+ [2m604[0m | 
+ [2m605[0m |           if (user) {
+ [2m606[0m |             const checkRes = await fetch(`/api/follows/users/check?following_id=${builderData.id}`);
+ [2m607[0m |             if (checkRes.ok) {
+ [2m608[0m |               const checkData = await checkRes.json();
+ [2m609[0m |               setIsFollowing(checkData.isFollowing);
+ [2m610[0m |             }
+ [2m611[0m |           }
+ [2m612[0m |         }
+ [2m613[0m |         
+ [2m614[0m |         if (entriesRes.ok) {
+ [2m615[0m |           const entriesData = await entriesRes.json();
+ [2m616[0m |           setEntries(entriesData.data.map(mapEntryToCardShape));
+ [2m617[0m |         }
+ [2m618[0m |       } catch (err) {
+ [2m619[0m |         console.error(err);
+ [2m620[0m |       } finally {
+ [2m621[0m |         setIsLoading(false);
+ [2m622[0m |       }
+ [2m623[0m |     }
+ [2m624[0m |     loadProfile();
+ [2m625[0m |   }, [params.username, user]);
+ [2m626[0m | 
+ [2m627[0m |   const isOwner = user?.id === builder?.id;
+     : [33;1m        ^^^|^^^[0m
+     :            [33;1m`-- [33;1m`isOwner` redefined here[0m[0m
+ [2m628[0m | 
+ [2m629[0m |   function handleTabChange(tab: string) {
+ [2m630[0m |     setActiveTab(tab);
+     `----
+
+Import trace for requested module:
+./src/app/[username]/page.tsx
+ ✓ Compiled in 198ms (991 modules)
+ ✓ Compiled in 668ms (991 modules)
+ ✓ Compiled in 208ms (991 modules)
+ ✓ Compiled in 185ms (991 modules)
+ ✓ Compiled in 159ms (991 modules)
+ ✓ Compiled in 240ms (991 modules)
+ ✓ Compiled in 367ms (993 modules)
+ ✓ Compiled in 334ms (993 modules)
+ ✓ Compiled in 288ms (992 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Restoring pack from /home/honey_badger/Code/Lab/scratch/Arcline/.next/cache/webpack/client-development.pack.gz failed: TypeError: Cannot read properties of undefined (reading 'hasStartTime')
+ ✓ Compiled in 400ms (992 modules)
+ ✓ Compiled in 1976ms (992 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Restoring pack from /home/honey_badger/Code/Lab/scratch/Arcline/.next/cache/webpack/client-development.pack.gz failed: TypeError: Cannot read properties of undefined (reading 'hasStartTime')
+ ✓ Compiled in 750ms (992 modules)
+ ✓ Compiled in 653ms (992 modules)
+ ✓ Compiled in 1198ms (992 modules)
+ ✓ Compiled in 855ms (992 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Restoring pack from /home/honey_badger/Code/Lab/scratch/Arcline/.next/cache/webpack/client-development.pack.gz failed: TypeError: Cannot read properties of undefined (reading 'hasStartTime')
+ ✓ Compiled in 430ms (992 modules)

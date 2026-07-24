@@ -39,7 +39,7 @@ export default function EntryCard({ entry, className, onDelete }: EntryCardProps
     if (deleteConfirmText !== "DELETE") return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/entries/${entry.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/journal/${entry.id}`, { method: 'DELETE' });
       if (res.ok) {
         if (onDelete) {
           onDelete(entry.id);

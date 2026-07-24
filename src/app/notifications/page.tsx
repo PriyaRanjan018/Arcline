@@ -64,7 +64,7 @@ export default function NotificationsPage() {
     async function fetchNotifications() {
       if (!user) return;
       try {
-        const res = await fetch("/api/notifications");
+        const res = await fetch("/api/alerts");
         if (res.ok) {
           const json = await res.json();
           setNotifications(json.data || []);
@@ -81,7 +81,7 @@ export default function NotificationsPage() {
   async function handleMarkAllRead() {
     if (!user) return;
     try {
-      await fetch("/api/notifications", {
+      await fetch("/api/alerts", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [] })

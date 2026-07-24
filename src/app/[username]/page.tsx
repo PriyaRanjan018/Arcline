@@ -28,336 +28,263 @@ import EntryCard from "@/components/shared/EntryCard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import MessageDrawer from "@/components/shared/MessageDrawer";
+import BuildHeatmap from "@/components/shared/BuildHeatmap";
 
-const TABS = ["Build Logs", "Journey Map", "About"];
 
-// ─── Journey Map ──────────────────────────────────────────────────────────────
+const TABS = ["Build Logs", "Progress", "About"];
+
+// ─── Journey Momentum Score (JMS) ──────────────────────────────────────────────
+// Philosophy: every entry type is a positive contribution.
+// NOTHING reduces momentum — only inactivity does.
+// Setbacks score higher than wins (courage premium).
+//
+// Formula:
+//   raw_score   = Σ(base_points × recency_multiplier) over all entries
+//   momentum    = raw_score × streak_mult × diversity_bonus × project_bonus
+//   jms_percent = MIN(100, momentum / 300 × 100)  — floor 5% for registered users
+
+const JMS_BASE: Record<string, number> = {
+  MILESTONE:   15,
+  SETBACK:     12,
+  WIN:         10,
+  REALIZATION:  8,
+};
+
+const JMS_BENCHMARK = 300;
+
+function getRecencyMultiplier(createdAt: string): number {
+  const diffMs   = Date.now() - new Date(createdAt).getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays <  1) return 2.0;
+  if (diffDays <  7) return 1.5;
+  if (diffDays < 30) return 1.2;
+  return 1.0;
+}
+
+function calcStreakDays(entries: { created_at: string }[]): number {
+  if (entries.length === 0) return 0;
+  const entryDays = new Set(
+    entries.map(e => {
+      const d = new Date(e.created_at);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })
+  );
+  const today = new Date();
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const check = new Date(today);
+    check.setDate(today.getDate() - i);
+    const key = `${check.getFullYear()}-${check.getMonth()}-${check.getDate()}`;
+    if (entryDays.has(key)) streak++;
+    else break;
+  }
+  return streak;
+}
+
+interface JMSResult {
+  percent:          number;
+  score:            number;  // rounded percent (legacy compat)
+  momentumPoints:   number;
+  rawScore:         number;
+  streakDays:       number;
+  streakMultiplier: number;
+  diversityBonus:   number;
+  projectBonus:     number;
+  uniqueProjects:   number;
+  wins:             number;
+  setbacks:         number;
+  milestones:       number;
+  realizations:     number;
+  state:            string;
+  stateColour:      string;
+}
+
+function calcMomentum(
+  entries: { type?: string; created_at: string; projectId?: string }[]
+): JMSResult {
+  const wins        = entries.filter(e => e.type === "WIN").length;
+  const setbacks    = entries.filter(e => e.type === "SETBACK").length;
+  const milestones  = entries.filter(e => e.type === "MILESTONE").length;
+  const realizations = entries.filter(e => e.type === "REALIZATION").length;
+
+  // ── Step 6: raw score ─────────────────────────────────────────
+  let rawScore = 0;
+  for (const entry of entries) {
+    const base    = JMS_BASE[entry.type ?? ""] ?? 8;
+    const recency = getRecencyMultiplier(entry.created_at);
+    rawScore += base * recency;
+  }
+
+  // ── Step 3: streak multiplier ─────────────────────────────────
+  const streakDays       = calcStreakDays(entries);
+  const streakMultiplier = Math.min(2.0, 1.0 + streakDays * 0.02);
+
+  // ── Step 4: diversity bonus ───────────────────────────────────
+  const typesPosted   = [wins > 0, setbacks > 0, milestones > 0, realizations > 0].filter(Boolean).length;
+  const diversityBonus = typesPosted === 4 ? 1.25
+                       : typesPosted === 3 ? 1.10
+                       : typesPosted === 2 ? 1.05
+                       : 1.00;
+
+  // ── Step 5: multi-project bonus ───────────────────────────────
+  const uniqueProjects = new Set(
+    entries.map(e => e.projectId).filter(Boolean)
+  ).size || 1;
+  const projectBonus = Math.min(1.25, 1.0 + (uniqueProjects - 1) * 0.05);
+
+  // ── Steps 7-8: final score ────────────────────────────────────
+  const momentumPoints = rawScore * streakMultiplier * diversityBonus * projectBonus;
+  let percent = Math.min(100, (momentumPoints / JMS_BENCHMARK) * 100);
+  // Floor: 5% for any registered user
+  percent = Math.max(5, percent);
+  percent = Math.round(percent * 10) / 10;
+
+  // ── Step 9: state label ───────────────────────────────────────
+  let state: string;
+  let stateColour: string;
+  if      (percent <= 15) { state = "Just Started"; stateColour = "#555555"; }
+  else if (percent <= 30) { state = "Warming Up";   stateColour = "#FF9800"; }
+  else if (percent <= 50) { state = "Building";     stateColour = "#7EB8F5"; }
+  else if (percent <= 70) { state = "Momentum";     stateColour = "#C9A96E"; }
+  else if (percent <= 90) { state = "On Fire";      stateColour = "#E8572A"; }
+  else                    { state = "Peak Builder"; stateColour = "#4CAF50"; }
+
+  return {
+    percent,
+    score:            Math.round(percent),
+    momentumPoints:   Math.round(momentumPoints * 10) / 10,
+    rawScore:         Math.round(rawScore * 10) / 10,
+    streakDays,
+    streakMultiplier: Math.round(streakMultiplier * 100) / 100,
+    diversityBonus,
+    projectBonus:     Math.round(projectBonus * 100) / 100,
+    uniqueProjects,
+    wins, setbacks, milestones, realizations,
+    state, stateColour,
+  };
+}
+
+// ─── Build Pulse Dashboard ──────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function JourneyMapTab({ entries }: { entries: any[] }) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+function BuildPulseTab({ builder, entries }: { builder: any, entries: any[] }) {
+  const momentum    = calcMomentum(entries);
+  const accentColor = momentum.stateColour;
 
-  const typeColors: Record<string, string> = {
-    WIN:         "var(--win)",
-    SETBACK:     "var(--setback)",
-    MILESTONE:   "var(--milestone)",
-    REALIZATION: "var(--realization)",
-  };
-
-  const typeLabelColors: Record<string, string> = {
-    WIN:         "text-win border-win/30 bg-win/5",
-    SETBACK:     "text-setback border-setback/30 bg-setback/5",
-    MILESTONE:   "text-milestone border-milestone/30 bg-milestone/5",
-    REALIZATION: "text-realization border-realization/30 bg-realization/5",
-  };
-
-  // Sort entries chronologically for the map
-  const sortedEntries = [...entries].reverse();
-
-  // Define a nice curved path by mapping coordinates to the container size
-  // Let the container be 1000px wide, 380px high
-  const widthVal = 1000;
-  const heightVal = 530;
-
-  const momentumMap: Record<string, number> = {
-    WIN: 230,       // Top-ish
-    MILESTONE: 300, // Upper middle
-    REALIZATION: 380, // Lower middle
-    SETBACK: 460    // Bottom
-  };
-
-  const points = sortedEntries.map((entry, i) => {
-    const segmentWidth = sortedEntries.length === 1 ? widthVal / 2 : widthVal / (sortedEntries.length + 0.2);
-    return {
-      x: sortedEntries.length === 1 ? widthVal / 2 : (i + 0.6) * segmentWidth,
-      y: momentumMap[entry.type] ?? (heightVal / 2),
-      type: entry.type,
-      title: entry.title,
-      content: entry.content || entry.body,
-      date: entry.date || new Date(entry.created_at).toLocaleDateString(),
-      raw: entry
-    };
-  });
-
-  const createCurvedPath = (pts: typeof points) => {
-    if (pts.length === 0) return "";
-    if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
-    
-    let path = `M${pts[0].x},${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const current = pts[i];
-      const next = pts[i + 1];
-      const cp1x = current.x + (next.x - current.x) * 0.5;
-      const cp1y = current.y;
-      const cp2x = current.x + (next.x - current.x) * 0.5;
-      const cp2y = next.y;
-      
-      path += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
-    }
-    return path;
-  };
-
-  const pathD = createCurvedPath(points);
-
-  // Statistics calculation for the Dashboard at the bottom
-  const total = sortedEntries.length;
-  const wins = sortedEntries.filter(e => e.type === "WIN").length;
-  const setbacks = sortedEntries.filter(e => e.type === "SETBACK").length;
-  const milestones = sortedEntries.filter(e => e.type === "MILESTONE").length;
-  const realizations = sortedEntries.filter(e => e.type === "REALIZATION").length;
-
-  // Progress Metric: Ratio of productive milestones/wins vs setbacks
-  const progressPercent = total > 0 ? Math.round(((wins + milestones + realizations) / total) * 100) : 0;
+  // JMS stat cards — all entry types are positive contributors
+  const STATS = [
+    {
+      label:   "Milestones",
+      count:   momentum.milestones,
+      pts:     momentum.milestones * 15,
+      dotColor: "#7EB8F5",
+      weight:  "+15 pts each",
+    },
+    {
+      label:   "Wins",
+      count:   momentum.wins,
+      pts:     momentum.wins * 10,
+      dotColor: "#4CAF50",
+      weight:  "+10 pts each",
+    },
+    {
+      label:   "Setbacks",
+      count:   momentum.setbacks,
+      pts:     momentum.setbacks * 12,
+      dotColor: "#FF9800",
+      weight:  "+12 pts each",
+    },
+    {
+      label:   "Realizations",
+      count:   momentum.realizations,
+      pts:     momentum.realizations * 8,
+      dotColor: "#C9A96E",
+      weight:  "+8 pts each",
+    },
+  ];
 
   return (
-    <div className="space-y-8">
-      {/* ── Visual Map Container ────────────────────────────────── */}
-      <div className="bg-surface border border-border p-6 md:p-8 relative overflow-x-auto select-none">
-        <div className="w-[1100px] h-[720px] relative">
-          
-          {/* Grid lines background */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+    <div className="flex flex-col gap-5">
 
-          {/* SVG Journey Track */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            {/* Mountain at the final node (Victory Landmark) */}
-            {points.length > 0 && (
-              <g transform={`translate(${points[points.length - 1].x - 60}, ${points[points.length - 1].y - 80})`} className="opacity-20">
-                <path d="M 60 0 L 120 120 L 0 120 Z" fill="none" stroke="var(--border-2)" strokeWidth="1" />
-                <path d="M 60 0 L 80 40 L 40 40 Z" fill="none" stroke="var(--border-2)" strokeWidth="0.5" />
-                <line x1="60" y1="0" x2="60" y2="-20" stroke="var(--border-2)" strokeWidth="1" />
-                <polygon points="60,-20 80,-12 60,-5" fill="var(--border-2)" />
-              </g>
-            )}
-
-            {/* Road/Base Track (Large Path) */}
-            {pathD && (
-              <>
-                <path d={pathD} fill="none" stroke="var(--surface2)"
-                  strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" className="opacity-30" />
-                <path d={pathD} fill="none" stroke="var(--border-2)"
-                  strokeWidth="1.5" strokeDasharray="5,8" strokeLinecap="round" />
-              </>
-            )}
-
-            {/* Glowing active animation line */}
-            {pathD && (
-              <motion.path
-                d={pathD} fill="none" stroke="var(--accent)" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 2.2, ease: "easeInOut" }}
-              />
-            )}
-
-            {/* Connector Lines & Active Node Pulsing */}
-            {points.map((p, i) => {
-              const isHovered = hoveredIndex === i;
-              const isEven = i % 2 === 0;
-              const lineOffset = isEven ? -40 : 40;
-
-              return (
-                <g key={i}>
-                  {/* Glowing vertical connector to float cards */}
-                  <line 
-                    x1={p.x} 
-                    y1={p.y} 
-                    x2={p.x} 
-                    y2={p.y + lineOffset} 
-                    stroke={isHovered ? "var(--accent)" : "var(--border-2)"} 
-                    strokeWidth={isHovered ? "1.2" : "0.6"} 
-                    strokeDasharray="2,3"
-                    className="transition-colors duration-200"
-                  />
-
-                  {/* Pulsing ring around node on hover */}
-                  <AnimatePresence>
-                    {isHovered && (
-                      <motion.circle
-                        cx={p.x}
-                        cy={p.y}
-                        r="12"
-                        fill="none"
-                        stroke="var(--accent)"
-                        strokeWidth="1"
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1.3, opacity: [0, 0.4, 0] }}
-                        exit={{ opacity: 0 }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeOut" }}
-                      />
-                    )}
-                  </AnimatePresence>
-
-                  {/* Nodes along curve */}
-                  <circle cx={p.x} cy={p.y} r="5" fill="var(--bg)" stroke={typeColors[p.type]} strokeWidth="2.5" />
-                  <circle cx={p.x} cy={p.y} r="2" fill={typeColors[p.type]} />
-                </g>
-              );
-            })}
-          </svg>
-
-          {/* HTML Cards Layer */}
-          <div className="absolute inset-0 pointer-events-none">
-            {points.map((p, i) => {
-              const isHovered = hoveredIndex === i;
-              const isEven = i % 2 === 0;
-
-              // Alternating layout: even steps float above the track, odd steps float below
-              const cardY = isEven ? p.y - 220 : p.y + 40;
-
-              return (
-                <motion.div
-                  key={i}
-                  onMouseEnter={() => setHoveredIndex(i)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  className={cn(
-                    "absolute pointer-events-auto w-[240px] h-[180px] bg-bg/95 border transition-all duration-300",
-                    isHovered 
-                      ? "border-accent shadow-[0_8px_30px_rgba(232,87,42,0.15)] -translate-y-1" 
-                      : "border-border shadow-md"
-                  )}
-                  style={{
-                    left: p.x - 120, // Center horizontally on node
-                    top: cardY,
-                  }}
-                  initial={{ opacity: 0, scale: 0.95, y: isEven ? -10 : 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: 0.15 * i, duration: 0.4, ease: "easeOut" }}
-                >
-                  {/* Card Header color accent based on type */}
-                  <div 
-                    className="h-1 w-full" 
-                    style={{ backgroundColor: typeColors[p.type] }}
-                  />
-
-                  <div className="p-4 flex flex-col h-full justify-between gap-2">
-                    {/* Index & Type Label */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-text3 uppercase tracking-wider">
-                        Step {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span className={cn(
-                        "text-[9px] font-mono px-2 py-0.5 border uppercase tracking-wider",
-                        typeLabelColors[p.type]
-                      )}>
-                        {p.type}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-sm font-display font-bold text-text1 line-clamp-1 leading-tight mt-1">
-                      {p.title}
-                    </h3>
-
-                    {/* Content Snippet */}
-                    <p className="text-[11px] text-text2 line-clamp-2 leading-relaxed font-body font-light">
-                      {p.content}
-                    </p>
-
-                    {/* Footer Date */}
-                    <div className="flex items-center gap-1.5 pt-2 border-t border-border/50 mt-1">
-                      <Calendar className="w-3 h-3 text-text3" />
-                      <span className="text-[10px] font-mono text-text3">{p.date}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+      {/* ── 1. MOMENTUM HERO CARD ── */}
+      <div className="bg-surface border border-border p-6">
+        <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
+          <div>
+            <h2 className="text-xs font-mono uppercase tracking-widest text-text3 mb-1">
+              Builder Momentum
+            </h2>
+            <p className="text-text2 text-xs leading-relaxed max-w-sm">
+              Based on entry types, recency, streak &amp; project diversity.
+              Setbacks score higher than wins — documenting struggle takes courage.
+            </p>
           </div>
+          <div className="text-right shrink-0">
+            <div className="font-mono text-5xl font-bold leading-none" style={{ color: accentColor }}>
+              {momentum.score}
+            </div>
+            <div className="text-[10px] font-mono text-text3 mt-1 uppercase tracking-widest">/ 100</div>
+            <div className="text-xs mt-1 font-mono" style={{ color: accentColor }}>{momentum.state}</div>
+          </div>
+        </div>
 
+        {/* Progress bar */}
+        <div className="relative h-2 bg-bg border border-border2 overflow-hidden">
+          <div
+            className="absolute inset-y-0 left-0 transition-all duration-700 ease-out"
+            style={{ width: `${momentum.percent}%`, background: accentColor }}
+          />
+        </div>
+
+        {/* JMS breakdown sub-row */}
+        <div className="flex gap-6 mt-4 flex-wrap">
+          <div>
+            <span className="text-[10px] font-mono text-text3 uppercase tracking-widest">Momentum</span>
+            <span className="ml-2 text-xs font-mono text-text1">{momentum.momentumPoints}<span className="text-text3"> pts</span></span>
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-text3 uppercase tracking-widest">Streak</span>
+            <span className="ml-2 text-xs font-mono text-text1">{momentum.streakDays}<span className="text-text3">d</span></span>
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-text3 uppercase tracking-widest">Diversity</span>
+            <span className="ml-2 text-xs font-mono text-text1">{momentum.diversityBonus}<span className="text-text3">×</span></span>
+          </div>
+          <div>
+            <span className="text-[10px] font-mono text-text3 uppercase tracking-widest">Entries</span>
+            <span className="ml-2 text-xs font-mono text-text1">{entries.length}</span>
+          </div>
         </div>
       </div>
 
-      {/* ── Legend & Summary Dashboard ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1.4fr_0.6fr] gap-6 bg-surface border border-border p-6 md:p-8">
-        
-        {/* Metric 1: Circular Progress Ring */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 border-b lg:border-b-0 lg:border-r border-border pb-6 sm:pb-0 sm:pr-6">
-          <div className="relative w-28 h-28 flex-shrink-0">
-            {/* SVG circle progress */}
-            <svg className="w-full h-full transform -rotate-90">
-              <circle cx="56" cy="56" r="48" fill="none" stroke="var(--border)" strokeWidth="6" />
-              <motion.circle 
-                cx="56" 
-                cy="56" 
-                r="48" 
-                fill="none" 
-                stroke="var(--accent)" 
-                strokeWidth="6" 
-                strokeDasharray={2 * Math.PI * 48}
-                initial={{ strokeDashoffset: 2 * Math.PI * 48 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 48 * (1 - progressPercent / 100) }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-mono font-bold text-text1">{progressPercent}%</span>
-              <span className="text-[9px] font-mono text-text3 uppercase tracking-wider">Momentum</span>
+      {/* ── 2. STAT CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {STATS.map(({ label, count, pts, dotColor, weight }) => (
+          <div key={label} className="bg-surface border border-border p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-text3">{label}</span>
+              </div>
+              <span className="text-[9px] font-mono text-text3">{weight}</span>
+            </div>
+            <div className="text-3xl font-mono font-bold" style={{ color: dotColor }}>{count}</div>
+            <div className="text-[11px] font-mono text-text3 border-t border-border pt-2">
+              +{pts} pts contribution
             </div>
           </div>
-          <div className="text-center sm:text-left">
-            <h3 className="text-sm font-display font-bold text-text1">Overall Progress</h3>
-            <p className="text-xs text-text3 mt-1 leading-relaxed">
-              Based on emotional momentum ratios. Setbacks are normalized as progression markers.
-            </p>
-          </div>
-        </div>
-
-        {/* Metric 2: Grid Statistics */}
-        <div className="flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-border pb-6 lg:pb-0 lg:pr-6">
-          <div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-text3">Journey Stats</span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
-              {[
-                { label: "Wins", value: wins, color: "var(--win)" },
-                { label: "Setbacks", value: setbacks, color: "var(--setback)" },
-                { label: "Milestones", value: milestones, color: "var(--milestone)" },
-                { label: "Realizations", value: realizations, color: "var(--realization)" },
-              ].map(stat => (
-                <div key={stat.label} className="bg-bg border border-border p-2">
-                  <div className="text-lg font-mono" style={{ color: stat.color }}>
-                    {stat.value}
-                  </div>
-                  <div className="text-[9px] uppercase tracking-wider text-text3 font-mono mt-0.5">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 mt-4 text-[11px] text-text2 font-mono">
-            <span className="flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-accent animate-pulse" />
-              Streak: 6 Days
-            </span>
-            <span className="text-border2">|</span>
-            <span className="flex items-center gap-1.5">
-              <Award className="w-3.5 h-3.5 text-accent" />
-              Badges: 3
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 3: Next Step Call-To-Action */}
-        <div className="flex flex-col justify-between h-full min-h-[120px]">
-          <div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-text3">Next Step</span>
-            <h4 className="text-xs font-display font-bold text-text1 mt-2 flex items-center gap-1">
-              Log a realization or milestone <Sparkles className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-            </h4>
-            <p className="text-[10px] text-text3 mt-1 leading-relaxed">
-              Every day spent building requires proof of work. Document the details.
-            </p>
-          </div>
-          <Link href="/new-entry" className="mt-3 block">
-            <button className="w-full py-2 border border-accent/40 bg-accentDim hover:bg-accent hover:text-white transition-all text-xs font-mono font-bold tracking-widest uppercase flex items-center justify-center gap-1">
-              Log Entry <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </Link>
-        </div>
+        ))}
       </div>
+
+      {/* ── 3. ACTIVITY HEATMAP ── */}
+      <div className="bg-surface border border-border p-6">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-text3 mb-6">
+          Activity — Logged Entries
+        </h2>
+        <BuildHeatmap
+          entries={entries}
+          builderSince={builder.building_since}
+        />
+      </div>
+
     </div>
   );
 }
@@ -396,21 +323,67 @@ function AboutTab({ builder, entries }: { builder: any, entries: any[] }) {
 function mapEntryToCardShape(dbEntry: any) {
   return {
     id: dbEntry.id,
-    projectId: dbEntry.project.title,
+    projectId: dbEntry.project?.title ?? "",
     builder: {
-      username: dbEntry.author.username,
-      name: dbEntry.author.name,
-      initials: dbEntry.author.name.substring(0, 2).toUpperCase(),
-      avatarUrl: dbEntry.author.avatar_url,
+      username: dbEntry.author?.username ?? "",
+      name: dbEntry.author?.name ?? "Builder",
+      initials: (dbEntry.author?.name ?? "??").substring(0, 2).toUpperCase(),
+      avatarUrl: dbEntry.author?.avatar_url,
       avatarBg: "bg-surface2",
     },
     type: dbEntry.type,
     title: dbEntry.title,
     content: dbEntry.body,
     date: new Date(dbEntry.created_at).toLocaleDateString(),
+    created_at: dbEntry.created_at,
     reactions: { feel: 0, keepGoing: 0, hitMe: 0, beenHere: 0 },
     reaction_count: dbEntry.reaction_count,
   };
+}
+
+// ─── Archives Tab ─────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ArchivesTab({ drafts, setDrafts }: { drafts: any[], setDrafts: any }) {
+  const handleDelete = (id: string) => {
+    const newDrafts = drafts.filter(d => d.id !== id);
+    setDrafts(newDrafts);
+    localStorage.setItem("arcline_drafts", JSON.stringify(newDrafts));
+  };
+
+  if (drafts.length === 0) {
+    return (
+      <div className="border border-dashed border-border2 p-16 text-center">
+        <p className="text-text3 font-mono text-sm">No drafts yet.</p>
+        <Link href="/new-entry" className="inline-block mt-4">
+          <Button size="sm">Log a new entry</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 max-w-3xl mx-auto">
+      {drafts.map((draft, idx) => (
+        <div key={draft.id || idx} className="bg-surface p-6 border border-border hover:border-border2 transition-colors">
+          <div className="flex justify-between items-start mb-3">
+            <span className="text-[10px] font-mono px-2 py-0.5 border uppercase tracking-wider text-text3 border-border2">
+              {draft.type}
+            </span>
+            <span className="text-[10px] font-mono text-text3">
+              {new Date(draft.date).toLocaleDateString()}
+            </span>
+          </div>
+          <h3 className="font-display font-bold text-xl mb-2 text-text1">{draft.title}</h3>
+          <p className="text-sm text-text2 line-clamp-3 mb-4 leading-relaxed font-body">{draft.content}</p>
+          <div className="flex items-center gap-3">
+            <Button size="sm" variant="ghost" onClick={() => handleDelete(draft.id)} className="text-red-500 hover:text-red-400 hover:bg-red-500/10 text-xs">
+              Discard
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ─── Mock Profile View (visitor fallback when no DB record) ──────────────────
@@ -513,7 +486,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
 
   const tabParam = searchParams.get("tab");
   const initialTab =
-    tabParam === "map" ? "Journey Map" : tabParam === "about" ? "About" : "Build Logs";
+    tabParam === "progress" || tabParam === "map" ? "Progress" : tabParam === "about" ? "About" : "Build Logs";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -526,6 +499,21 @@ function ProfileContent({ params }: { params: { username: string } }) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [isMsgOpen, setIsMsgOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [drafts, setDrafts] = useState<any[]>([]);
+
+  const isOwner = user?.id === builder?.id;
+
+  useEffect(() => {
+    if (isOwner) {
+      const saved = localStorage.getItem("arcline_drafts");
+      if (saved) {
+        try {
+          setDrafts(JSON.parse(saved));
+        } catch (e) {}
+      }
+    }
+  }, [isOwner]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -533,7 +521,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
       try {
         const [profileRes, entriesRes] = await Promise.all([
           fetch(`/api/profile/${params.username}`),
-          fetch(`/api/entries?username=${params.username}`)
+          fetch(`/api/journal?username=${params.username}`)
         ]);
         
         if (profileRes.ok) {
@@ -564,14 +552,14 @@ function ProfileContent({ params }: { params: { username: string } }) {
     loadProfile();
   }, [params.username, user]);
 
-  const isOwner = user?.id === builder?.id;
 
   function handleTabChange(tab: string) {
     setActiveTab(tab);
     const paramMap: Record<string, string> = {
-      "Journey Map": "map",
+      "Progress":    "progress",
       "About":       "about",
       "Build Logs":  "logs",
+      "Archives":    "archives",
     };
     router.replace(`/${params.username}?tab=${paramMap[tab]}`, { scroll: false });
   }
@@ -651,7 +639,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
                 <span className="font-mono text-[0.6rem] text-text3">Since {builder.building_since}</span>
               </div>
             )}
-            <p className="text-text2 mb-4 max-w-lg text-sm leading-relaxed">{builder.bio}</p>
+            <p className="text-text2 mb-4 max-w-lg text-sm leading-relaxed whitespace-pre-wrap">{builder.bio}</p>
 
             {(builder.builder_role || builder.currently_building) && (
               <div className="flex flex-col gap-1.5 mb-6 text-left">
@@ -767,7 +755,8 @@ function ProfileContent({ params }: { params: { username: string } }) {
           <div className="flex items-end gap-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
             {[
               { label: "Build Logs",   count: projects.length,                         key: "Build Logs"   },
-              { label: "Journey Map",  count: entries.length,                           key: "Journey Map"  },
+              { label: "Progress",  count: entries.length,                           key: "Progress"  },
+              ...(isOwner ? [{ label: "Archives", count: drafts.length, key: "Archives" }] : []),
               { label: "About",        count: null,                                     key: "About"        },
             ].map((tab) => {
               const isActive = tab.key === activeTab;
@@ -864,7 +853,9 @@ function ProfileContent({ params }: { params: { username: string } }) {
           </div>
         )}
 
-        {activeTab === "Journey Map" && <JourneyMapTab entries={entries} />}
+        {activeTab === "Progress" && <BuildPulseTab builder={builder} entries={entries} />}
+
+        {activeTab === "Archives" && isOwner && <ArchivesTab drafts={drafts} setDrafts={setDrafts} />}
 
         {activeTab === "About" && <AboutTab builder={builder} entries={entries} />}
       </div>

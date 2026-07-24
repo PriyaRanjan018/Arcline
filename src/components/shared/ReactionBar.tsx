@@ -58,7 +58,7 @@ export default function ReactionBar({
 
     // API call
     try {
-      await fetch(`/api/entries/${entryId}/reactions`, {
+      await fetch(`/api/journal/${entryId}/reactions`, {
         method: isActive ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: key }),

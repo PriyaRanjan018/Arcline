@@ -756,7 +756,7 @@ export default function SettingsPage() {
                   <button type="button"
                     onClick={async () => {
                       try {
-                        const res = await fetch("/api/entries?limit=1000");
+                        const res = await fetch("/api/journal?limit=1000");
                         const json = await res.json();
                         const blob = new Blob([JSON.stringify(json.data ?? [], null, 2)], { type: "application/json" });
                         const url = URL.createObjectURL(blob);

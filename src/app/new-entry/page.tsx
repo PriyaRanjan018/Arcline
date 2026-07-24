@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { Plus, FolderOpen, ArrowRight, Layers } from "lucide-react";
+import ArcloneMonogram from "@/components/shared/ArcloneMonogram";
 
 const ENTRY_TYPES = [
   { id: "WIN",         label: "WIN",         borderVar: "--win",         textClass: "text-win border-win"         },
@@ -77,9 +78,35 @@ export default function NewEntryPage() {
     setErrorMsg("");
     setIsDraft(draft);
     
+    if (draft) {
+      try {
+        const draftEntry = {
+          id: `draft_${Date.now()}`,
+          projectId,
+          type: selectedType,
+          title,
+          content,
+          mood,
+          date: new Date().toISOString()
+        };
+        const draftsStr = localStorage.getItem("arcline_drafts") || "[]";
+        const drafts = JSON.parse(draftsStr);
+        drafts.push(draftEntry);
+        localStorage.setItem("arcline_drafts", JSON.stringify(drafts));
+        
+        setSubmitted(true);
+        setTimeout(() => router.push(`/${profile?.username}?tab=archives`), 1200);
+      } catch (err: any) {
+        setErrorMsg(err.message);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     try {
-      // POST to /api/entries
-      const res = await fetch("/api/entries", {
+      // POST to /api/journal
+      const res = await fetch("/api/journal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -105,8 +132,8 @@ export default function NewEntryPage() {
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-48px)] gap-6">
-        <div className="text-4xl">
-          {isDraft ? "💾" : selectedType === "WIN" ? "🔥" : selectedType === "SETBACK" ? "📌" : "✦"}
+        <div className="opacity-60 mb-2">
+          <ArcloneMonogram size={56} />
         </div>
         <h2 className="text-2xl font-display font-bold">
           {isDraft ? "Draft saved." : "Entry published."}

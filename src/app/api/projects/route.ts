@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         tagline: tagline?.trim() || null,
         description: description?.trim() || null,
         category: safeCategory,
-        stage: stage || 'BUILDING',
+        stage: stage || 'STARTED',
       })
       .select()
       .single()
