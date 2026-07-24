@@ -11,7 +11,8 @@ export async function GET(req: Request) {
   const type    = searchParams.get('type')     // WIN | SETBACK | MILESTONE | REALIZATION
   const sort    = searchParams.get('sort')     // latest | trending (default: latest)
   const cursor  = searchParams.get('cursor')
-  const limit   = Math.min(Number(searchParams.get('limit') ?? PAGE_SIZE), 50)
+  const ids     = searchParams.get('ids')
+  const limit   = Math.min(Number(searchParams.get('limit') ?? PAGE_SIZE), ids ? 100 : 50)
 
   const { data: pubProjects } = await supabase.from('projects').select('id').eq('is_public', true)
   const pubProjectIds = pubProjects?.map(p => p.id) ?? []
@@ -28,6 +29,13 @@ export async function GET(req: Request) {
 
   // Type filter — SETBACK and WIN are treated identically in query logic (rule #4)
   if (type) query = query.eq('type', type.toUpperCase())
+  
+  if (ids) {
+    const idList = ids.split(',').filter(Boolean)
+    if (idList.length > 0) {
+      query = query.in('id', idList)
+    }
+  }
 
   // Sort — trending by reaction_count, otherwise by created_at DESC
   if (sort === 'trending') {

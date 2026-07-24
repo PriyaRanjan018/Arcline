@@ -6,15 +6,22 @@ export async function GET(req: Request) {
   const supabase = createClient()
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('user_id')
+  const ids = searchParams.get('ids')
 
   let query = supabase
     .from('projects')
     .select('*, profiles(username, name, avatar_url)')
     .eq('is_public', true)
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(ids ? 100 : 20)
 
   if (userId) query = query.eq('user_id', userId)
+  if (ids) {
+    const idList = ids.split(',').filter(Boolean)
+    if (idList.length > 0) {
+      query = query.in('id', idList)
+    }
+  }
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -29,7 +29,7 @@ export default function BookmarksPage() {
         const storedEntryIds = JSON.parse(localStorage.getItem(`bookmarks_entries_${user?.id}`) || "[]");
 
         if (storedProjIds.length > 0) {
-          const res = await fetch("/api/projects");
+          const res = await fetch(`/api/projects?ids=${storedProjIds.join(",")}`);
           if (res.ok) {
             const json = await res.json();
             const filtered = (json.data || []).filter((p: any) => storedProjIds.includes(p.id));
@@ -38,7 +38,7 @@ export default function BookmarksPage() {
         }
 
         if (storedEntryIds.length > 0) {
-          const res = await fetch("/api/feed/explore?limit=50");
+          const res = await fetch(`/api/feed/explore?ids=${storedEntryIds.join(",")}`);
           if (res.ok) {
             const json = await res.json();
             const filtered = (json.data || []).filter((e: any) => storedEntryIds.includes(e.id));
