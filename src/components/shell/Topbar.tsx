@@ -9,10 +9,63 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+export function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return `just now`;
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function NotificationItem({ notif }: { notif: any }) {
+  const [imgError, setImgError] = useState(false);
+  const actorObj = Array.isArray(notif.actor) ? notif.actor[0] : notif.actor;
+  const actorInitials = actorObj?.name 
+    ? actorObj.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() 
+    : "?";
+
+  return (
+    <div 
+      className={cn(
+        "flex items-start gap-3 p-3 border-b border-[#222222]",
+        !notif.is_read ? "bg-[#E8572A08] border-l-[3px] border-l-[#E8572A]" : "bg-[#111111]"
+      )}
+    >
+      {actorObj?.avatar_url && !imgError ? (
+        <img 
+          src={actorObj.avatar_url} 
+          alt="avatar" 
+          className="w-[24px] h-[24px] rounded-full object-cover flex-shrink-0" 
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="w-[24px] h-[24px] rounded-full bg-[#333333] flex items-center justify-center text-[0.6rem] font-body text-white flex-shrink-0">
+          {actorInitials}
+        </div>
+      )}
+      <div className="flex flex-col">
+        <p className={cn(
+          "font-body font-light text-[0.8rem] leading-tight",
+          !notif.is_read ? "text-[#F2EDE4]" : "text-[#888888]"
+        )}>
+          {actorObj?.name ? <span className="font-medium mr-1">{actorObj.name}</span> : null}
+          {notif.message}
+        </p>
+        <span className="font-mono text-[0.58rem] text-[#555555] mt-1">{timeAgo(notif.created_at)}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function Topbar({ isLanding }: { isLanding?: boolean }) {
   const { user, profile, loading, signOut } = useAuth();
   const [hasUnread, setHasUnread] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const pathname = usePathname();
   const notifRef = useRef<HTMLDivElement>(null);
@@ -31,19 +84,20 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
   useEffect(() => {
     if (!user) return;
 
-    // 1. Initial check for unread notifications
-    async function checkUnread() {
+    // 1. Fetch recent notifications
+    async function fetchNotifications() {
       try {
-        const res = await fetch("/api/alerts?unread=true");
+        const res = await fetch("/api/alerts");
         if (res.ok) {
           const json = await res.json();
-          setHasUnread(json.data && json.data.length > 0);
+          setNotifications(json.data || []);
+          setHasUnread(json.data?.some((n: any) => !n.is_read) || false);
         }
       } catch (err) {
         console.error("Failed to fetch notifications", err);
       }
     }
-    checkUnread();
+    fetchNotifications();
 
     // 2. Subscribe to new notifications via Realtime
     const supabase = createClient();
@@ -59,7 +113,7 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
         },
         (payload) => {
           console.log("New notification:", payload);
-          setHasUnread(true);
+          fetchNotifications();
         }
       )
       .subscribe();
@@ -68,6 +122,22 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  async function markAllRead() {
+    try {
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      if (unreadIds.length === 0) return;
+      await fetch("/api/alerts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: unreadIds })
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setHasUnread(false);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   // Derive initials from real name, fallback to "?" while loading
   const initials = profile?.name
@@ -147,48 +217,21 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
                 <div className="absolute right-0 top-[48px] w-[320px] bg-[#111111] border border-[#222222] shadow-xl z-50 flex flex-col">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-[#222222]">
                     <h3 className="font-display font-bold text-[1rem] text-[#F2EDE4]">Notifications</h3>
-                    <button className="font-body text-[0.7rem] text-[#888888] hover:text-[#F2EDE4] transition-colors">
+                    <button onClick={markAllRead} className="font-body text-[0.7rem] text-[#888888] hover:text-[#F2EDE4] transition-colors">
                       Mark all read
                     </button>
                   </div>
                   
                   <div className="flex flex-col max-h-[300px] overflow-y-auto custom-scrollbar">
-                    {/* Example Unread */}
-                    <div className="flex items-start gap-3 p-3 bg-[#E8572A08] border-l-[3px] border-[#E8572A]">
-                      <div className="w-[24px] h-[24px] rounded-full bg-[#333333] flex items-center justify-center text-[0.6rem] font-body text-white flex-shrink-0">
-                        MK
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center font-body text-[0.8rem] text-[#555555]">
+                        No notifications yet.
                       </div>
-                      <div className="flex flex-col">
-                        <p className="font-body font-light text-[0.8rem] text-[#F2EDE4] leading-tight">
-                          Meera K. reacted 'I feel this' to your entry
-                        </p>
-                        <span className="font-mono text-[0.58rem] text-[#555555] mt-1">2m ago</span>
-                      </div>
-                    </div>
-                    {/* Example Read */}
-                    <div className="flex items-start gap-3 p-3 bg-[#111111] border-b border-[#222222]">
-                      <div className="w-[24px] h-[24px] rounded-full bg-[#333333] flex items-center justify-center text-[0.6rem] font-body text-white flex-shrink-0">
-                        AS
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="font-body font-light text-[0.8rem] text-[#888888] leading-tight">
-                          Arjun S. started following your journey
-                        </p>
-                        <span className="font-mono text-[0.58rem] text-[#555555] mt-1">1h ago</span>
-                      </div>
-                    </div>
-                    {/* Example Read 2 */}
-                    <div className="flex items-start gap-3 p-3 bg-[#111111] border-b border-[#222222]">
-                      <div className="w-[24px] h-[24px] rounded-full bg-[#333333] flex items-center justify-center text-[0.6rem] font-body text-white flex-shrink-0">
-                        PR
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="font-body font-light text-[0.8rem] text-[#888888] leading-tight">
-                          Priya R. commented on your build log
-                        </p>
-                        <span className="font-mono text-[0.58rem] text-[#555555] mt-1">3h ago</span>
-                      </div>
-                    </div>
+                    ) : (
+                      notifications.slice(0, 5).map((notif) => (
+                        <NotificationItem key={notif.id} notif={notif} />
+                      ))
+                    )}
                   </div>
 
                   <Link 

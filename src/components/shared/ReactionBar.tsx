@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Flame, ArrowUpCircle, Zap, Hand } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +36,24 @@ export default function ReactionBar({
   const router = useRouter();
   const [counts, setCounts] = useState<Reactions>(initialCounts);
   const [active, setActive] = useState<Set<string>>(new Set(initialUserReactions));
+
+  useEffect(() => {
+    async function loadReactions() {
+      try {
+        const res = await fetch(`/api/journal/${entryId}/reactions`);
+        if (res.ok) {
+          const { data } = await res.json();
+          if (data) {
+            setCounts(data.counts);
+            setActive(new Set(data.userReactions));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load reactions:", err);
+      }
+    }
+    loadReactions();
+  }, [entryId, user]);
 
   async function toggle(key: string) {
     if (!user) {

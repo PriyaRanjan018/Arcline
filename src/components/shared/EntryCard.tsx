@@ -14,12 +14,12 @@ import ReactionBar from "./ReactionBar";
 interface EntryCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entry: any;
-  variant?: "standard" | "spotlight" | "feed";
+  variant?: "standard" | "spotlight" | "feed" | "compact";
   className?: string;
   onDelete?: (id: string) => void;
 }
 
-export default function EntryCard({ entry, className, onDelete }: EntryCardProps) {
+export default function EntryCard({ entry, variant = "standard", className, onDelete }: EntryCardProps) {
   const { profile } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -92,8 +92,10 @@ export default function EntryCard({ entry, className, onDelete }: EntryCardProps
 
       {/* Content */}
       <div>
-        <h3 className="text-xl font-display font-bold mb-2 text-text1">{entry.title}</h3>
-        <p className="text-text2 text-sm leading-relaxed">{entry.content}</p>
+        <h3 className={cn("font-display font-bold text-text1", variant === "compact" ? "text-base" : "text-xl mb-2")}>{entry.title}</h3>
+        {variant !== "compact" && (
+          <p className="text-text2 text-sm leading-relaxed">{entry.content}</p>
+        )}
       </div>
 
       {/* Footer */}

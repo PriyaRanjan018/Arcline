@@ -161,15 +161,29 @@ function MobileLoggedInNav({ pathname, profile }: { pathname: string; profile: a
   );
 }
 
+const ENTRY_COLORS: Record<string, string> = {
+  WIN: "#4CAF50",
+  SETBACK: "#FF9800",
+  MILESTONE: "#7EB8F5",
+  REALIZATION: "#C9A96E",
+};
+
 function GuestSidebar({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab");
   const [stats, setStats] = useState({ builders: 0, entries: 0 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [recentJourneys, setRecentJourneys] = useState<any[]>([]);
 
   useEffect(() => {
     fetch("/api/stats")
       .then(r => r.json())
       .then(json => setStats({ builders: json.builders ?? 0, entries: json.entries ?? 0 }))
+      .catch(() => {});
+
+    fetch("/api/feed/explore?limit=3")
+      .then(r => r.json())
+      .then(json => setRecentJourneys(json.data ?? []))
       .catch(() => {});
   }, []);
 
@@ -180,12 +194,6 @@ function GuestSidebar({ pathname }: { pathname: string }) {
     { href: "/how-it-works", label: "How It Works", icon: HelpCircle },
     { href: "/explore?tab=featured", label: "Featured Builds", icon: Star },
     { href: "/explore?tab=trending", label: "Trending", icon: TrendingUp },
-  ];
-
-  const RECENT_JOURNEYS = [
-    { id: 1, title: "Finally nailed the landing page...", color: "#E8572A" },
-    { id: 2, title: "Struggling with Supabase RLS", color: "#FF9800" },
-    { id: 3, title: "First 100 users milestone reached", color: "#7EB8F5" },
   ];
 
   return (
@@ -250,11 +258,11 @@ function GuestSidebar({ pathname }: { pathname: string }) {
       <div>
         <div className="font-mono text-[0.56rem] text-[#555555] tracking-widest mb-2 px-[12px]">RECENT JOURNEYS</div>
         <div className="flex flex-col gap-2 px-[12px]">
-          {RECENT_JOURNEYS.map((item) => (
-            <Link key={item.id} href="/explore" className="flex items-center gap-2 group">
-              <span className="w-[4px] h-[4px] rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+          {recentJourneys.map((item) => (
+            <Link key={item.id} href={item.author?.username && item.project?.slug ? `/${item.author.username}/project/${item.project.slug}` : "/explore"} className="flex items-center gap-2 group">
+              <span className="w-[4px] h-[4px] rounded-full flex-shrink-0" style={{ backgroundColor: ENTRY_COLORS[item.type] || "#888888" }} />
               <span className="font-body font-light text-[0.75rem] text-[#888888] truncate group-hover:text-[#F2EDE4] transition-colors">
-                {item.title}
+                {item.title || "Untitled Entry"}
               </span>
             </Link>
           ))}
@@ -369,7 +377,6 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
     { href: profile?.username ? `/${profile.username}` : "/profile", label: "My Builds", icon: LayoutDashboard },
     { href: "/messages", label: "Messages", icon: MessageSquare },
     { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
-    { href: "/notifications", label: "Notifications", icon: Bell, badge: hasUnreadNotifications },
   ];
 
   const SECONDARY_NAV = [

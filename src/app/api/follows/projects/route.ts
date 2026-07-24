@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 /** POST /api/follows/projects — follow a project */
@@ -17,6 +18,29 @@ export async function POST(req: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (notify) {
+    const supabaseAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    
+    const { data: project } = await supabaseAdmin.from('projects').select('user_id, title').eq('id', project_id).single()
+    const { data: actor } = await supabaseAdmin.from('profiles').select('name, username').eq('id', user.id).single()
+    const actorName = actor?.name || actor?.username || 'Someone'
+
+    if (project && project.user_id !== user.id) {
+       await supabaseAdmin.from('notifications').upsert({
+         user_id: project.user_id,
+         actor_id: user.id,
+         type: 'follow_project',
+         entity_type: 'project',
+         entity_id: project_id,
+         message: `${actorName} started following your build: ${project.title}`
+       }, { onConflict: 'user_id,actor_id,type,entity_id' })
+    }
+  }
+
   return NextResponse.json({ data }, { status: 201 })
 }
 

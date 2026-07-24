@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { REACTION_TYPES } from '@/lib/enums'
 
@@ -65,6 +66,27 @@ export async function POST(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  
+  const { data: entry } = await supabaseAdmin.from('entries').select('user_id, title').eq('id', params.id).single()
+  const { data: actor } = await supabaseAdmin.from('profiles').select('name, username').eq('id', user.id).single()
+  const actorName = actor?.name || actor?.username || 'Someone'
+
+  if (entry && entry.user_id !== user.id) {
+     await supabaseAdmin.from('notifications').upsert({
+       user_id: entry.user_id,
+       actor_id: user.id,
+       type: 'reaction',
+       entity_type: 'entry',
+       entity_id: params.id,
+       message: `${actorName} reacted to your entry`
+     }, { onConflict: 'user_id,actor_id,type,entity_id' })
+  }
+
   return NextResponse.json({ data }, { status: 201 })
 }
 

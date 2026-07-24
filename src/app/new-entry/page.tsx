@@ -42,7 +42,7 @@ export default function NewEntryPage() {
   const [charCount, setCharCount]       = useState(0);
   const [submitted, setSubmitted]       = useState(false);
   const [projectsLoaded, setProjectsLoaded] = useState(false);
-  const [pickingProject, setPickingProject] = useState(true);
+  const [pickingProject, setPickingProject] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -60,7 +60,6 @@ export default function NewEntryPage() {
       .then(({ data }) => {
         if (data && data.length > 0) {
           setMyProjects(data);
-          setProjectId(data[0].id);
         }
         setProjectsLoaded(true);
       });
@@ -73,7 +72,11 @@ export default function NewEntryPage() {
   }
 
   async function handleSubmit(draft = false) {
-    if ((!isValid && !draft) || !projectId) return;
+    if (!projectId && !draft) {
+      alert("select the project first");
+      return;
+    }
+    if (!isValid && !draft) return;
     setIsSubmitting(true);
     setErrorMsg("");
     setIsDraft(draft);

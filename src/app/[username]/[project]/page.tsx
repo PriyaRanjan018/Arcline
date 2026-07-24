@@ -10,8 +10,18 @@ import StageBadge from "@/components/shared/StageBadge";
 import Button from "@/components/shared/Button";
 import JourneyProgressBar from "@/components/shared/JourneyProgressBar";
 import EntryTimeline from "@/components/shared/EntryTimeline";
+import CustomSelect from "@/components/shared/CustomSelect";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, LayoutList } from "lucide-react";
+import { ArrowLeft, LayoutList, Menu, Bookmark } from "lucide-react";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const FILTER_OPTIONS = [
+  { value: "ALL", label: "All types" },
+  { value: "WIN", label: "Wins" },
+  { value: "SETBACK", label: "Setbacks" },
+  { value: "MILESTONE", label: "Milestones" },
+  { value: "REALIZATION", label: "Realizations" },
+];
 
 // ── Entry mapper ──────────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +64,9 @@ export default function BuildLogPage({ params }: { params: { username: string; p
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [activeTab, setActiveTab] = useState<"Build Log" | "Journey Map">("Build Log");
+  const [viewMode, setViewMode] = useState<"standard" | "compact">("standard");
+  const [filterType, setFilterType] = useState<string>("ALL");
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -98,10 +111,37 @@ export default function BuildLogPage({ params }: { params: { username: string; p
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.username, params.project, user?.id]);
 
+  useEffect(() => {
+    if (user && project) {
+      const storedProjIds = JSON.parse(localStorage.getItem(`bookmarks_projects_${user.id}`) || "[]");
+      setIsBookmarked(storedProjIds.includes(project.id));
+    }
+  }, [user, project]);
+
   const handleFollow = () => {
     if (!user) {
       router.push(`/login?next=/${params.username}/${params.project}`);
     }
+  };
+
+  const handleBookmark = () => {
+    if (!user) {
+      router.push(`/login?next=/${params.username}/${params.project}`);
+      return;
+    }
+    const key = `bookmarks_projects_${user.id}`;
+    let stored = JSON.parse(localStorage.getItem(key) || "[]");
+    
+    if (isBookmarked) {
+      stored = stored.filter((id: string) => id !== project.id);
+    } else {
+      if (!stored.includes(project.id)) {
+        stored.push(project.id);
+      }
+    }
+    
+    localStorage.setItem(key, JSON.stringify(stored));
+    setIsBookmarked(!isBookmarked);
   };
 
   const executeDeleteProject = async () => {
@@ -213,16 +253,6 @@ export default function BuildLogPage({ params }: { params: { username: string; p
                   )}
                 >
                   {tab}
-                  {tab === "Build Log" && entries.length > 0 && (
-                    <span
-                      className={cn(
-                        "ml-2 text-[10px] font-mono px-1.5 py-0.5 leading-none",
-                        activeTab === tab ? "bg-accentDim text-accent" : "bg-surface2 text-text3"
-                      )}
-                    >
-                      {entries.length}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
@@ -233,17 +263,35 @@ export default function BuildLogPage({ params }: { params: { username: string; p
             <div>
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
                 <h2 className="text-sm font-mono uppercase tracking-widest text-text2">Build Log</h2>
-                <div className="flex items-center gap-2 bg-surface2 p-1 border border-border2">
-                  <button className="p-1.5 bg-surface border border-border2 text-text1">
-                    <LayoutList className="w-4 h-4" />
-                  </button>
+                <div className="flex items-center gap-4">
+                  <div className="w-36">
+                    <CustomSelect
+                      value={filterType}
+                      onChange={setFilterType}
+                      options={FILTER_OPTIONS}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 bg-surface2 p-1 border border-border2">
+                    <button 
+                      onClick={() => setViewMode("standard")}
+                      className={cn("p-1.5 transition-colors", viewMode === "standard" ? "bg-surface border border-border2 text-text1" : "bg-transparent border border-transparent text-text3 hover:text-text2")}
+                    >
+                      <LayoutList className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => setViewMode("compact")}
+                      className={cn("p-1.5 transition-colors", viewMode === "compact" ? "bg-surface border border-border2 text-text1" : "bg-transparent border border-transparent text-text3 hover:text-text2")}
+                    >
+                      <Menu className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-6">
-                {entries.length > 0 ? (
-                  entries.map((entry) => (
-                    <EntryCard key={entry.id} entry={entry} variant="standard" />
+                {(filterType === "ALL" ? entries : entries.filter((e) => e.type === filterType)).length > 0 ? (
+                  (filterType === "ALL" ? entries : entries.filter((e) => e.type === filterType)).map((entry) => (
+                    <EntryCard key={entry.id} entry={entry} variant={viewMode as any} />
                   ))
                 ) : (
                   <div className="text-center py-12 border border-dashed border-border2 bg-surface2/50">
@@ -289,9 +337,19 @@ export default function BuildLogPage({ params }: { params: { username: string; p
         </div>
 
         {!isOwner && (
-          <Button className="w-full" onClick={handleFollow}>
-            {user ? "Follow this build" : "Sign in to follow"}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button className="w-full" onClick={handleFollow}>
+              {user ? "Follow this build" : "Sign in to follow"}
+            </Button>
+            <Button 
+              variant="outline" 
+              className={cn("w-full gap-2", isBookmarked ? "border-accent text-accent bg-accent/5 hover:bg-accent/10" : "hover:bg-surface2")}
+              onClick={handleBookmark}
+            >
+              <Bookmark className="w-4 h-4" fill={isBookmarked ? "currentColor" : "none"} />
+              {isBookmarked ? "Bookmarked" : "Bookmark this build"}
+            </Button>
+          </div>
         )}
         {isOwner && (
           <Button

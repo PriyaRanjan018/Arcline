@@ -451,7 +451,11 @@ function ProfileContent({ params }: { params: { username: string } }) {
 
   const tabParam = searchParams.get("tab");
   const initialTab =
-    tabParam === "progress" || tabParam === "map" ? "Progress" : "Build Logs";
+    tabParam === "archives"
+      ? "Archives"
+      : tabParam === "progress" || tabParam === "map"
+      ? "Progress"
+      : "Build Logs";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -786,17 +790,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
                   {/* Label */}
                   <span>{tab.label}</span>
 
-                  {/* Count pill */}
-                  {tab.count !== null && tab.count > 0 && (
-                    <span className={cn(
-                      "text-[10px] font-mono px-1.5 py-0.5 leading-none transition-colors",
-                      isActive
-                        ? "bg-accentDim text-accent"
-                        : "bg-surface2 text-text3 group-hover:text-text2"
-                    )}>
-                      {tab.count}
-                    </span>
-                  )}
+                  {/* Count pill removed */}
 
                   {/* Active sliding underline */}
                   {isActive && (
@@ -830,7 +824,7 @@ function ProfileContent({ params }: { params: { username: string } }) {
                 {/* Pinned */}
                 <div>
                   <h2 className="text-xs font-mono uppercase tracking-widest text-text3 mb-4">
-                    Pinned Build
+                    Builds
                   </h2>
                   <ProjectCard project={projects[0]} username={builder.username} className="border-accent/20" />
                 </div>

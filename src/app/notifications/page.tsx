@@ -1,7 +1,7 @@
 "use client";
 
 import PageTransition from "@/components/shared/PageTransition";
-import { Bell, UserPlus, MessageSquare, Flame, AtSign, Settings } from "lucide-react";
+import { Bell, UserPlus, MessageSquare, Flame, AtSign, Settings, FolderOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import Link from "next/link";
 function NotifIcon({ type }: { type: string }) {
   const cls = "w-4 h-4";
   if (type === "follow")   return <UserPlus    className={cls} />;
+  if (type === "follow_project") return <FolderOpen className={cls} />;
   if (type === "comment")  return <MessageSquare className={cls} />;
   if (type === "reaction") return <Flame        className={cls} />;
   if (type === "mention")  return <AtSign       className={cls} />;

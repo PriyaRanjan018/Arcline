@@ -184,10 +184,10 @@ export default function BuildHeatmap({ entries, builderSince }: BuildHeatmapProp
   // ── Cell sizing: auto-fit to container ───────────────────────────────────────
   const DAY_LABEL_W = 28;
   const YEAR_COL_W = 42;
-  const GAP = 2;
+  const GAP = 4;
   const numCols = grid.length || 53;
   const availableW = containerWidth - DAY_LABEL_W - YEAR_COL_W - 24; // 24px padding
-  const CELL = availableW > 0 ? Math.max(10, Math.floor((availableW - GAP * (numCols - 1)) / numCols)) : 13;
+  const CELL = availableW > 0 ? Math.max(6, Math.floor((availableW - GAP * (numCols - 1)) / numCols)) : 10;
 
   // ── Tooltip ───────────────────────────────────────────────────────────────────
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number; count: number } | null>(null);
@@ -387,8 +387,8 @@ export default function BuildHeatmap({ entries, builderSince }: BuildHeatmapProp
         <div style={{ display: "flex", gap: 3 }}>
           {[0,1,2,3,4].map(lvl => (
             <div key={lvl} style={{
-              width: 13,
-              height: 13,
+              width: 11,
+              height: 11,
               borderRadius: 3,
               background: LEVEL_COLORS[lvl],
               border: "1px solid rgba(255,255,255,0.05)",
