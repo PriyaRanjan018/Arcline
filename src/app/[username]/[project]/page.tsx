@@ -12,6 +12,7 @@ import JourneyProgressBar from "@/components/shared/JourneyProgressBar";
 import EntryTimeline from "@/components/shared/EntryTimeline";
 import CustomSelect from "@/components/shared/CustomSelect";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { ArrowLeft, LayoutList, Menu, Bookmark } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -59,7 +60,6 @@ export default function BuildLogPage({ params }: { params: { username: string; p
   const [followers, setFollowers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound,  setNotFound]  = useState(false);
-  const [isOwner,   setIsOwner]   = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -67,6 +67,8 @@ export default function BuildLogPage({ params }: { params: { username: string; p
   const [viewMode, setViewMode] = useState<"standard" | "compact">("standard");
   const [filterType, setFilterType] = useState<string>("ALL");
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -98,8 +100,23 @@ export default function BuildLogPage({ params }: { params: { username: string; p
           setEntries((entriesData.data ?? []).map(mapEntryToCardShape));
         }
 
-        setFollowers(builderData.followers ?? 0);
-        if (user?.id === builderData.id) setIsOwner(true);
+        const supabase = createClient();
+        const { count: projFollowersCount } = await supabase
+          .from("project_follows")
+          .select("*", { count: "exact", head: true })
+          .eq("project_id", found.id);
+          
+        if (user) {
+          const { data: followData } = await supabase
+            .from("project_follows")
+            .select("follower_id")
+            .eq("project_id", found.id)
+            .eq("follower_id", user.id)
+            .single();
+          if (followData) setIsFollowing(true);
+        }
+
+        setFollowers(projFollowersCount ?? 0);
       } catch (err) {
         console.error(err);
         setNotFound(true);
@@ -118,9 +135,40 @@ export default function BuildLogPage({ params }: { params: { username: string; p
     }
   }, [user, project]);
 
-  const handleFollow = () => {
+  const handleFollow = async () => {
     if (!user) {
       router.push(`/login?next=/${params.username}/${params.project}`);
+      return;
+    }
+    if (isFollowLoading) return;
+    setIsFollowLoading(true);
+
+    try {
+      if (isFollowing) {
+        const res = await fetch("/api/follows/projects", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project_id: project.id })
+        });
+        if (res.ok) {
+          setIsFollowing(false);
+          setFollowers(f => Math.max(0, f - 1));
+        }
+      } else {
+        const res = await fetch("/api/follows/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project_id: project.id, notify: true })
+        });
+        if (res.ok) {
+          setIsFollowing(true);
+          setFollowers(f => f + 1);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -163,9 +211,57 @@ export default function BuildLogPage({ params }: { params: { username: string; p
 
   if (authLoading || isLoading) {
     return (
-      <div className="p-16 text-center text-text3 font-mono animate-pulse">
-        Loading build log…
-      </div>
+      <PageTransition className="flex flex-col lg:flex-row min-h-screen">
+        {/* Main Content Skeleton */}
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto lg:pr-[332px]">
+          <div className="max-w-3xl mx-auto animate-pulse">
+            <div className="w-48 h-4 bg-surface rounded mb-8"></div>
+            <div className="flex items-start justify-between mb-6">
+              <div className="w-2/3 h-10 bg-surface rounded"></div>
+              <div className="w-24 h-6 bg-surface rounded"></div>
+            </div>
+            <div className="w-full h-4 bg-surface rounded mb-3"></div>
+            <div className="w-4/5 h-4 bg-surface rounded mb-10"></div>
+            
+            <div className="w-full h-16 bg-surface rounded mb-10"></div>
+            
+            <div className="flex gap-4 mb-8 border-b border-border pb-2">
+              <div className="w-20 h-4 bg-surface rounded"></div>
+              <div className="w-20 h-4 bg-surface rounded"></div>
+            </div>
+            
+            <div className="w-full h-48 bg-surface rounded-lg border border-border mb-6"></div>
+            <div className="w-full h-48 bg-surface rounded-lg border border-border"></div>
+          </div>
+        </div>
+
+        {/* Right Panel Skeleton */}
+        <div className="hidden lg:block fixed right-0 top-[48px] bottom-0 w-[300px] bg-surface border-l border-border z-10">
+          <div className="p-6 lg:p-8 flex flex-col gap-8 h-full animate-pulse">
+            <div>
+              <div className="w-32 h-3 bg-surface2 rounded mb-6"></div>
+              <div className="space-y-4">
+                <div className="flex justify-between border-b border-border2 pb-2">
+                  <div className="w-16 h-4 bg-surface2 rounded"></div>
+                  <div className="w-16 h-4 bg-surface2 rounded"></div>
+                </div>
+                <div className="flex justify-between border-b border-border2 pb-2">
+                  <div className="w-16 h-4 bg-surface2 rounded"></div>
+                  <div className="w-8 h-4 bg-surface2 rounded"></div>
+                </div>
+                <div className="flex justify-between border-b border-border2 pb-2">
+                  <div className="w-16 h-4 bg-surface2 rounded"></div>
+                  <div className="w-8 h-4 bg-surface2 rounded"></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="w-full h-10 bg-surface2 rounded"></div>
+              <div className="w-full h-10 bg-surface2 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
     );
   }
 
@@ -186,12 +282,14 @@ export default function BuildLogPage({ params }: { params: { username: string; p
     ? new Date(project.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
     : "—";
 
+  const isOwner = user?.id === builder?.id;
+
   const TABS: Array<"Build Log" | "Journey Map"> = ["Build Log", "Journey Map"];
 
   return (
     <PageTransition className="flex flex-col lg:flex-row min-h-screen">
       {/* Main Content */}
-      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto lg:pr-[332px]">
         <div className="max-w-3xl mx-auto">
 
           {/* Back link */}
@@ -317,8 +415,9 @@ export default function BuildLogPage({ params }: { params: { username: string; p
       </div>
 
       {/* Right Panel (Details) */}
-      <div className="w-full lg:w-[300px] bg-surface border-l border-border p-6 lg:p-8 flex flex-col gap-8 hidden lg:flex">
-        <div>
+      <div className="hidden lg:block fixed right-0 top-[48px] bottom-0 w-[300px] bg-surface border-l border-border z-10">
+        <div className="p-6 lg:p-8 flex flex-col gap-8 h-full overflow-y-auto custom-scrollbar">
+          <div>
           <h3 className="text-xs font-mono uppercase tracking-widest text-text3 mb-4">About this Build</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center border-b border-border2 pb-2">
@@ -338,8 +437,12 @@ export default function BuildLogPage({ params }: { params: { username: string; p
 
         {!isOwner && (
           <div className="flex flex-col gap-3">
-            <Button className="w-full" onClick={handleFollow}>
-              {user ? "Follow this build" : "Sign in to follow"}
+            <Button 
+              className={cn("w-full transition-all duration-200", isFollowing ? "bg-surface2 text-text1 border-border2 hover:bg-surface" : "")} 
+              onClick={handleFollow} 
+              disabled={isFollowLoading}
+            >
+              {user ? (isFollowing ? "Following" : "Follow this build") : "Sign in to follow"}
             </Button>
             <Button 
               variant="outline" 
@@ -361,6 +464,7 @@ export default function BuildLogPage({ params }: { params: { username: string; p
             Delete Build
           </Button>
         )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
