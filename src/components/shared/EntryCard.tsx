@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trash2 } from "lucide-react";
+import { Trash2, Bookmark } from "lucide-react";
 import { animations } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import Avatar from "./Avatar";
@@ -20,11 +20,36 @@ interface EntryCardProps {
 }
 
 export default function EntryCard({ entry, variant = "standard", className, onDelete }: EntryCardProps) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const isOwner = profile?.username === entry.builder.username;
+
+  useEffect(() => {
+    if (!user) return;
+    const storedEntryIds = JSON.parse(localStorage.getItem(`bookmarks_entries_${user.id}`) || "[]");
+    setIsBookmarked(storedEntryIds.includes(entry.id));
+  }, [user, entry.id]);
+
+  const handleBookmark = () => {
+    if (!user) {
+      alert("Please sign in to bookmark entries");
+      return;
+    }
+    const key = `bookmarks_entries_${user.id}`;
+    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+    if (isBookmarked) {
+      const updated = stored.filter((id: string) => id !== entry.id);
+      localStorage.setItem(key, JSON.stringify(updated));
+      setIsBookmarked(false);
+    } else {
+      stored.push(entry.id);
+      localStorage.setItem(key, JSON.stringify(stored));
+      setIsBookmarked(true);
+    }
+  };
 
   const typeColors = {
     WIN: "var(--win)",
@@ -110,16 +135,31 @@ export default function EntryCard({ entry, variant = "standard", className, onDe
           }}
           initialUserReactions={[]} // Would come from DB if populated
         />
-        {isOwner && (
-          <button 
-            onClick={() => setShowDeleteModal(true)} 
-            disabled={isDeleting}
-            className="text-text3 hover:text-red-500 transition-colors p-2 rounded-sm disabled:opacity-50"
-            title="Delete Entry"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {!isOwner && (
+            <button 
+              onClick={handleBookmark}
+              className={cn(
+                "transition-colors p-2 rounded-sm",
+                isBookmarked ? "text-accent" : "text-text3 hover:text-accent"
+              )}
+              title={isBookmarked ? "Remove Bookmark" : "Bookmark Entry"}
+            >
+              <Bookmark className="w-4 h-4" fill={isBookmarked ? "currentColor" : "none"} />
+            </button>
+          )}
+          
+          {isOwner && (
+            <button 
+              onClick={() => setShowDeleteModal(true)} 
+              disabled={isDeleting}
+              className="text-text3 hover:text-red-500 transition-colors p-2 rounded-sm disabled:opacity-50"
+              title="Delete Entry"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

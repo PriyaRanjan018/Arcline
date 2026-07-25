@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { ENTRY_TYPES } from '@/lib/enums'
 
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
   // ── Verify project belongs to this user ───────────────────
   const { data: project } = await supabase
     .from('projects')
-    .select('id')
+    .select('id, title')
     .eq('id', project_id)
     .eq('user_id', user.id)
     .single()
@@ -114,6 +115,36 @@ export async function POST(req: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // ── Notify project followers ────────────────────────────────
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: actor } = await supabaseAdmin.from('profiles').select('name, username').eq('id', user.id).single()
+  const actorName = actor?.name || actor?.username || 'Someone'
+
+  const { data: followers } = await supabaseAdmin
+    .from('project_follows')
+    .select('follower_id')
+    .eq('project_id', project_id)
+    .eq('notify', true)
+
+  if (followers && followers.length > 0) {
+    const projTitle = project?.title || 'a build'
+    
+    const notifications = followers.map(f => ({
+      user_id: f.follower_id,
+      actor_id: user.id,
+      type: 'new_entry',
+      entity_type: 'entry',
+      entity_id: data.id,
+      message: `${actorName} added a new log to ${projTitle}`
+    }))
+
+    await supabaseAdmin.from('notifications').insert(notifications)
+  }
 
   return NextResponse.json({ data }, { status: 201 })
 }

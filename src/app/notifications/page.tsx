@@ -1,7 +1,7 @@
 "use client";
 
 import PageTransition from "@/components/shared/PageTransition";
-import { Bell, UserPlus, MessageSquare, Flame, AtSign, Settings, FolderOpen } from "lucide-react";
+import { Bell, UserPlus, MessageSquare, Flame, AtSign, Settings, FolderOpen, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -15,6 +15,7 @@ function NotifIcon({ type }: { type: string }) {
   if (type === "reaction") return <Flame        className={cls} />;
   if (type === "mention")  return <AtSign       className={cls} />;
   if (type === "system")   return <Settings     className={cls} />;
+  if (type === "new_entry") return <FileText    className={cls} />;
   return <Bell className={cls} />;
 }
 
