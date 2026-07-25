@@ -13,6 +13,7 @@ import EntryTimeline from "@/components/shared/EntryTimeline";
 import CustomSelect from "@/components/shared/CustomSelect";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, LayoutList, Menu, Bookmark } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const FILTER_OPTIONS = [
@@ -67,6 +68,8 @@ export default function BuildLogPage({ params }: { params: { username: string; p
   const [viewMode, setViewMode] = useState<"standard" | "compact">("standard");
   const [filterType, setFilterType] = useState<string>("ALL");
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -98,7 +101,24 @@ export default function BuildLogPage({ params }: { params: { username: string; p
           setEntries((entriesData.data ?? []).map(mapEntryToCardShape));
         }
 
-        setFollowers(builderData.followers ?? 0);
+        const supabase = createClient();
+        const { count } = await supabase
+          .from('project_follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('project_id', found.id);
+        
+        setFollowers(count ?? 0);
+
+        if (user) {
+          const { data: followData } = await supabase
+            .from('project_follows')
+            .select('follower_id')
+            .eq('project_id', found.id)
+            .eq('follower_id', user.id)
+            .single();
+          setIsFollowing(!!followData);
+        }
+
         if (user?.id === builderData.id) setIsOwner(true);
       } catch (err) {
         console.error(err);
@@ -118,9 +138,39 @@ export default function BuildLogPage({ params }: { params: { username: string; p
     }
   }, [user, project]);
 
-  const handleFollow = () => {
+  const handleFollow = async () => {
     if (!user) {
       router.push(`/login?next=/${params.username}/${params.project}`);
+      return;
+    }
+    
+    setIsFollowLoading(true);
+    try {
+      if (isFollowing) {
+        const res = await fetch('/api/follows/projects', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: project.id })
+        });
+        if (res.ok) {
+          setIsFollowing(false);
+          setFollowers(prev => Math.max(0, prev - 1));
+        }
+      } else {
+        const res = await fetch('/api/follows/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: project.id, notify: true })
+        });
+        if (res.ok) {
+          setIsFollowing(true);
+          setFollowers(prev => prev + 1);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -338,8 +388,8 @@ export default function BuildLogPage({ params }: { params: { username: string; p
 
         {!isOwner && (
           <div className="flex flex-col gap-3">
-            <Button className="w-full" onClick={handleFollow}>
-              {user ? "Follow this build" : "Sign in to follow"}
+            <Button className="w-full" onClick={handleFollow} disabled={isFollowLoading} variant={isFollowing ? "outline" : "default"}>
+              {user ? (isFollowing ? "Following this build" : "Follow this build") : "Sign in to follow"}
             </Button>
             <Button 
               variant="outline" 
