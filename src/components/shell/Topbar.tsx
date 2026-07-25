@@ -81,6 +81,13 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Mark all as read when navigating to /notifications page
+  useEffect(() => {
+    if (pathname === "/notifications" && hasUnread) {
+      markAllRead();
+    }
+  }, [pathname, hasUnread]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -203,11 +210,16 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
             {/* Notifications Wrapper */}
             <div className="relative hidden sm:block" ref={notifRef}>
               <button 
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => {
+                  if (!showNotifications && hasUnread) {
+                    markAllRead();
+                  }
+                  setShowNotifications(!showNotifications);
+                }}
                 className="text-text2 hover:text-[#E8572A] transition-colors relative flex items-center justify-center w-8 h-8"
               >
                 <Bell className="w-[18px] h-[18px]" />
-                {hasUnread && pathname !== "/notifications" && (
+                {hasUnread && (
                   <span className="absolute top-[4px] right-[4px] w-[6px] h-[6px] rounded-full bg-[#E8572A]" />
                 )}
               </button>
