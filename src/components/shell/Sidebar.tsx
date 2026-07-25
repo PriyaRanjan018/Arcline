@@ -334,14 +334,21 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
 
   useEffect(() => {
     if (!profile) return;
-    supabase
-      .from('projects')
-      .select('id, slug, title, stage, entries:entries(count)')
-      .eq('user_id', profile.id)
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(4)
-      .then(({ data }) => setMyProjects(data ?? []));
+    
+    const fetchProjects = () => {
+      supabase
+        .from('projects')
+        .select('id, slug, title, stage, entries:entries(count)')
+        .eq('user_id', profile.id)
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(4)
+        .then(({ data }) => setMyProjects(data ?? []));
+    };
+
+    fetchProjects();
+
+    window.addEventListener("projects-updated", fetchProjects);
       
     supabase
       .from('notifications')
@@ -360,6 +367,10 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
         })
         .catch(console.error);
     }
+    
+    return () => {
+      window.removeEventListener("projects-updated", fetchProjects);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 

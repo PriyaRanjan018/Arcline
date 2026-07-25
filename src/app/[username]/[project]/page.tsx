@@ -198,6 +198,7 @@ export default function BuildLogPage({ params }: { params: { username: string; p
     try {
       const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
       if (res.ok) {
+        window.dispatchEvent(new Event("projects-updated"));
         router.push(`/${params.username}`);
       } else {
         alert("Failed to delete project.");

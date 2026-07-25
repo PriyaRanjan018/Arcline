@@ -115,6 +115,8 @@ export default function NewBuildPage() {
     }
 
     setDone(true);
+    // Dispatch event to refresh sidebar
+    window.dispatchEvent(new Event("projects-updated"));
     // Redirect to the project's build log
     const username = profile?.username || "";
     setTimeout(() => router.push(username ? `/${username}/${projectSlug}` : "/dashboard"), 1200);
