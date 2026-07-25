@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
   let query = supabase
     .from('projects')
-    .select('*, profiles(username, name, avatar_url)')
+    .select('*, profiles!user_id(username, name, avatar_url)')
     .eq('is_public', true)
     .order('created_at', { ascending: false })
     .limit(ids ? 100 : 20)
