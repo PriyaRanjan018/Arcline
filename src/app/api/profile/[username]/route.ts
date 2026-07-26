@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { calcMomentum } from '@/lib/momentum'
 
 export async function GET(
   _req: Request,
@@ -22,6 +23,14 @@ export async function GET(
   if (profileError || !profile) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
+
+  // Fetch entries for momentum calculation
+  const { data: entries } = await supabase
+    .from('entries')
+    .select('type, created_at, project_id')
+    .eq('author_id', profile.id)
+
+  const momentum = calcMomentum(entries || [])
 
   // Fetch follower / following counts
   const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
@@ -50,6 +59,8 @@ export async function GET(
         ...profile,
         followers: followersCount ?? 0,
         following: followingCount ?? 0,
+        momentumPercent: momentum.percent,
+        momentumStateColour: momentum.stateColour
       },
       projects: projects ?? [],
     },

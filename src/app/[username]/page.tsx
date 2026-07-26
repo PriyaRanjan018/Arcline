@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import MessageDrawer from "@/components/shared/MessageDrawer";
 import BuildHeatmap from "@/components/shared/BuildHeatmap";
-
+import { calcMomentum } from "@/lib/momentum";
 
 const TABS = ["Build Logs", "Progress"];
 
@@ -43,126 +43,7 @@ const TABS = ["Build Logs", "Progress"];
 //   momentum    = raw_score × streak_mult × diversity_bonus × project_bonus
 //   jms_percent = MIN(100, momentum / 300 × 100)  — floor 5% for registered users
 
-const JMS_BASE: Record<string, number> = {
-  MILESTONE:   15,
-  SETBACK:     12,
-  WIN:         10,
-  REALIZATION:  8,
-};
 
-const JMS_BENCHMARK = 300;
-
-function getRecencyMultiplier(createdAt: string): number {
-  const diffMs   = Date.now() - new Date(createdAt).getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  if (diffDays <  1) return 2.0;
-  if (diffDays <  7) return 1.5;
-  if (diffDays < 30) return 1.2;
-  return 1.0;
-}
-
-function calcStreakDays(entries: { created_at: string }[]): number {
-  if (entries.length === 0) return 0;
-  const entryDays = new Set(
-    entries.map(e => {
-      const d = new Date(e.created_at);
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    })
-  );
-  const today = new Date();
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const check = new Date(today);
-    check.setDate(today.getDate() - i);
-    const key = `${check.getFullYear()}-${check.getMonth()}-${check.getDate()}`;
-    if (entryDays.has(key)) streak++;
-    else break;
-  }
-  return streak;
-}
-
-interface JMSResult {
-  percent:          number;
-  score:            number;  // rounded percent (legacy compat)
-  momentumPoints:   number;
-  rawScore:         number;
-  streakDays:       number;
-  streakMultiplier: number;
-  diversityBonus:   number;
-  projectBonus:     number;
-  uniqueProjects:   number;
-  wins:             number;
-  setbacks:         number;
-  milestones:       number;
-  realizations:     number;
-  state:            string;
-  stateColour:      string;
-}
-
-function calcMomentum(
-  entries: { type?: string; created_at: string; projectId?: string }[]
-): JMSResult {
-  const wins        = entries.filter(e => e.type === "WIN").length;
-  const setbacks    = entries.filter(e => e.type === "SETBACK").length;
-  const milestones  = entries.filter(e => e.type === "MILESTONE").length;
-  const realizations = entries.filter(e => e.type === "REALIZATION").length;
-
-  // ── Step 6: raw score ─────────────────────────────────────────
-  let rawScore = 0;
-  for (const entry of entries) {
-    const base    = JMS_BASE[entry.type ?? ""] ?? 8;
-    const recency = getRecencyMultiplier(entry.created_at);
-    rawScore += base * recency;
-  }
-
-  // ── Step 3: streak multiplier ─────────────────────────────────
-  const streakDays       = calcStreakDays(entries);
-  const streakMultiplier = Math.min(2.0, 1.0 + streakDays * 0.02);
-
-  // ── Step 4: diversity bonus ───────────────────────────────────
-  const typesPosted   = [wins > 0, setbacks > 0, milestones > 0, realizations > 0].filter(Boolean).length;
-  const diversityBonus = typesPosted === 4 ? 1.25
-                       : typesPosted === 3 ? 1.10
-                       : typesPosted === 2 ? 1.05
-                       : 1.00;
-
-  // ── Step 5: multi-project bonus ───────────────────────────────
-  const uniqueProjects = new Set(
-    entries.map(e => e.projectId).filter(Boolean)
-  ).size || 1;
-  const projectBonus = Math.min(1.25, 1.0 + (uniqueProjects - 1) * 0.05);
-
-  // ── Steps 7-8: final score ────────────────────────────────────
-  const momentumPoints = rawScore * streakMultiplier * diversityBonus * projectBonus;
-  let percent = Math.min(100, (momentumPoints / JMS_BENCHMARK) * 100);
-  // Floor: 5% for any registered user
-  percent = Math.max(5, percent);
-  percent = Math.round(percent * 10) / 10;
-
-  // ── Step 9: state label ───────────────────────────────────────
-  let state: string;
-  let stateColour: string;
-  if      (percent <= 15) { state = "Just Started"; stateColour = "#555555"; }
-  else if (percent <= 30) { state = "Warming Up";   stateColour = "#FF9800"; }
-  else if (percent <= 50) { state = "Building";     stateColour = "#7EB8F5"; }
-  else if (percent <= 70) { state = "Momentum";     stateColour = "#C9A96E"; }
-  else if (percent <= 90) { state = "On Fire";      stateColour = "#E8572A"; }
-  else                    { state = "Peak Builder"; stateColour = "#4CAF50"; }
-
-  return {
-    percent,
-    score:            Math.round(percent),
-    momentumPoints:   Math.round(momentumPoints * 10) / 10,
-    rawScore:         Math.round(rawScore * 10) / 10,
-    streakDays,
-    streakMultiplier: Math.round(streakMultiplier * 100) / 100,
-    diversityBonus,
-    projectBonus:     Math.round(projectBonus * 100) / 100,
-    uniqueProjects,
-    wins, setbacks, milestones, realizations,
-    state, stateColour,
-  };
-}
 
 // ─── Build Pulse Dashboard ──────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -230,7 +111,7 @@ function BuildPulseTab({ builder, entries }: { builder: any, entries: any[] }) {
         <div className="relative h-2 bg-bg border border-border2 overflow-hidden">
           <div
             className="absolute inset-y-0 left-0 transition-all duration-700 ease-out"
-            style={{ width: `${momentum.percent}%`, background: accentColor }}
+            style={{ width: `${momentum.percent}%`, background: "#E8572A" }}
           />
         </div>
 
@@ -346,6 +227,11 @@ function ArchivesTab({ drafts, setDrafts }: { drafts: any[], setDrafts: any }) {
           <h3 className="font-display font-bold text-xl mb-2 text-text1">{draft.title}</h3>
           <p className="text-sm text-text2 line-clamp-3 mb-4 leading-relaxed font-body">{draft.content}</p>
           <div className="flex items-center gap-3">
+            <Link href={`/new-entry?draftId=${draft.id}`}>
+              <Button size="sm" variant="ghost" className="text-text2 hover:text-text1 hover:bg-white/5 text-xs">
+                Edit
+              </Button>
+            </Link>
             <Button size="sm" variant="ghost" onClick={() => handleDelete(draft.id)} className="text-red-500 hover:text-red-400 hover:bg-red-500/10 text-xs">
               Discard
             </Button>

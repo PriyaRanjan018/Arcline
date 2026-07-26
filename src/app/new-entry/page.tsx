@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageTransition from "@/components/shared/PageTransition";
 import Button from "@/components/shared/Button";
@@ -29,6 +29,8 @@ export default function NewEntryPage() {
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftId = searchParams.get("draftId");
   const titleRef = useRef<HTMLInputElement>(null);
 
   const [selectedType, setSelectedType] = useState("REALIZATION");
@@ -66,6 +68,27 @@ export default function NewEntryPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
+  useEffect(() => {
+    if (draftId) {
+      try {
+        const draftsStr = localStorage.getItem("arcline_drafts") || "[]";
+        const drafts = JSON.parse(draftsStr);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const draft = drafts.find((d: any) => d.id === draftId);
+        if (draft) {
+          setSelectedType(draft.type || "REALIZATION");
+          setMood(draft.mood || 3);
+          setTitle(draft.title || "");
+          setContent(draft.content || "");
+          setCharCount((draft.content || "").length);
+          if (draft.projectId) setProjectId(draft.projectId);
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+  }, [draftId]);
+
   function handleContentChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setContent(e.target.value);
     setCharCount(e.target.value.length);
@@ -76,7 +99,7 @@ export default function NewEntryPage() {
       alert("select the project first");
       return;
     }
-    if (!isValid && !draft) return;
+    if (!isValid) return;
     setIsSubmitting(true);
     setErrorMsg("");
     setIsDraft(draft);
@@ -84,7 +107,7 @@ export default function NewEntryPage() {
     if (draft) {
       try {
         const draftEntry = {
-          id: `draft_${Date.now()}`,
+          id: draftId || `draft_${Date.now()}`,
           projectId,
           type: selectedType,
           title,
@@ -93,7 +116,11 @@ export default function NewEntryPage() {
           date: new Date().toISOString()
         };
         const draftsStr = localStorage.getItem("arcline_drafts") || "[]";
-        const drafts = JSON.parse(draftsStr);
+        let drafts = JSON.parse(draftsStr);
+        if (draftId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          drafts = drafts.filter((d: any) => d.id !== draftId);
+        }
         drafts.push(draftEntry);
         localStorage.setItem("arcline_drafts", JSON.stringify(drafts));
         
@@ -125,6 +152,17 @@ export default function NewEntryPage() {
       if (!res.ok) throw new Error(json.error || "Failed to publish entry");
 
       setSubmitted(true);
+      if (draftId) {
+        try {
+          const draftsStr = localStorage.getItem("arcline_drafts") || "[]";
+          let drafts = JSON.parse(draftsStr);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          drafts = drafts.filter((d: any) => d.id !== draftId);
+          localStorage.setItem("arcline_drafts", JSON.stringify(drafts));
+        } catch (e) {
+          // ignore
+        }
+      }
       setTimeout(() => router.push("/dashboard"), 1200);
     } catch (err: any) {
       setErrorMsg(err.message);
@@ -238,17 +276,8 @@ export default function NewEntryPage() {
   return (
     <PageTransition className="p-4 md:p-8 max-w-3xl mx-auto w-full pb-36">
       {/* Page Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8">
         <h1 className="text-3xl font-display font-bold">Log New Entry</h1>
-        <button
-          onClick={() => setPickingProject(true)}
-          className="flex items-center gap-2 text-xs font-mono text-text3 uppercase tracking-widest hover:text-[#E8572A] transition-colors group"
-          title="Change project"
-        >
-          <FolderOpen className="w-3.5 h-3.5" />
-          <span>{myProjects.find(p => p.id === projectId)?.title ?? "No Project Selected"}</span>
-          <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">(change)</span>
-        </button>
       </div>
 
       {/* ── Type Selector ───────────────────────────────── */}
@@ -354,27 +383,30 @@ export default function NewEntryPage() {
       <div className="fixed bottom-0 left-0 right-0 md:left-[240px] bg-[rgba(8,8,8,0.95)]
                       backdrop-blur-[12px] border-t border-border p-4 flex items-center justify-between z-40">
         <div className="flex flex-col gap-1">
-          <Button variant="ghost" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
+          <Button 
+            variant="ghost" 
+            onClick={() => handleSubmit(true)} 
+            disabled={!isValid || isSubmitting}
+            className={cn("transition-opacity", (!isValid || isSubmitting) && "opacity-40 cursor-not-allowed")}
+          >
             {isSubmitting && isDraft ? "Saving..." : "Save Draft"}
           </Button>
           {errorMsg && <span className="text-red-500 text-xs px-4">{errorMsg}</span>}
         </div>
         <div className="flex items-center gap-3">
-          {myProjects.length > 0 ? (
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="bg-surface border border-border2 text-sm text-text1 px-3 py-2 outline-none
-                         hover:border-text3 transition-colors cursor-pointer"
-              disabled={isSubmitting}
-            >
-              {myProjects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-            </select>
-          ) : (
-            <div className="text-sm text-text3 font-mono border border-border2 px-3 py-2">
-              Create a project first
-            </div>
-          )}
+          <button
+            onClick={() => myProjects.length > 0 && setPickingProject(true)}
+            disabled={myProjects.length === 0 || isSubmitting}
+            className="flex items-center gap-2 text-xs font-mono text-text3 uppercase tracking-widest hover:text-[#E8572A] transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+            title={myProjects.length > 0 ? "Change project" : "Create a project first"}
+          >
+            <FolderOpen className="w-3.5 h-3.5" />
+            <span>
+              {myProjects.length === 0 
+                ? "NO PROJECT SELECTED" 
+                : (myProjects.find(p => p.id === projectId)?.title ?? "NO PROJECT SELECTED")}
+            </span>
+          </button>
           <Button
             onClick={() => handleSubmit(false)}
             disabled={!isValid || isSubmitting}

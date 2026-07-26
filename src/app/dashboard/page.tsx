@@ -43,21 +43,22 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile?.username) return;
     async function fetchAll() {
       try {
         const [feedRes, exploreRes, projectsRes] = await Promise.all([
-          fetch("/api/feed"),
-          fetch("/api/feed/explore?sort=latest&limit=5"),
+          fetch("/api/feed/explore?limit=50"),
+          fetch("/api/feed/explore?sort=latest&limit=15"),
           fetch("/api/projects")
         ]);
 
         if (feedRes.ok) {
           const json = await feedRes.json();
           if (json.data) {
-            setFeed(json.data.map(mapEntryToCardShape));
+            const otherUsersEntries = json.data.filter((e: any) => e.author?.username !== profile?.username);
+            setFeed(otherUsersEntries.map(mapEntryToCardShape));
             // Count wins in the feed
-            const winCount = json.data.filter((e: any) => e.type === "WIN").length;
+            const winCount = otherUsersEntries.filter((e: any) => e.type === "WIN").length;
             setWins(winCount);
           }
         }
@@ -165,22 +166,22 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {suggested.length > 0 ? (
             suggested.map((builder) => (
-              <div key={builder.username} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div key={builder.username} className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <Avatar
                     initials={(builder.name ?? "??").substring(0, 2).toUpperCase()}
                     src={builder.avatar_url}
                     bgColor="bg-surface2"
                     size="sm"
                   />
-                  <div>
-                    <div className="text-sm font-medium hover:text-accent transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium hover:text-accent transition-colors truncate">
                       <Link href={`/${builder.username}`}>{builder.name}</Link>
                     </div>
-                    <div className="text-xs text-text3">@{builder.username}</div>
+                    <div className="text-xs text-text3 truncate">@{builder.username}</div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs border border-border2">Follow</Button>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs border border-border2 shrink-0">Follow</Button>
               </div>
             ))
           ) : (

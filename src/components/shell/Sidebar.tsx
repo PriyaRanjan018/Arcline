@@ -59,7 +59,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col fixed left-0 top-[48px] bottom-0 w-[240px] border-r border-[#222222] bg-[#111111] py-[16px] px-[12px] z-40 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <aside className="hidden md:flex flex-col fixed left-0 top-[48px] bottom-0 w-[240px] border-r border-[#222222] bg-[#111111] z-40">
         {user ? <LoggedInSidebar pathname={pathname} profile={profile} signOut={signOut} /> : <GuestSidebar pathname={pathname} />}
       </aside>
 
@@ -197,8 +197,9 @@ function GuestSidebar({ pathname }: { pathname: string }) {
   ];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* TOP SECTION — BRAND PITCH */}
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar py-[16px] px-[12px] flex flex-col">
+        {/* TOP SECTION — BRAND PITCH */}
       <div className="bg-[#080808] border border-[#222222] p-[12px] px-[14px]">
         <div className="font-mono text-[0.56rem] text-[#E8572A] tracking-wide mb-1 uppercase">For Builders</div>
         <p className="font-body font-light text-[0.75rem] text-[#888888] leading-[1.6] mb-3">
@@ -286,7 +287,9 @@ function GuestSidebar({ pathname }: { pathname: string }) {
         </div>
       </div>
 
-      <div className="mt-auto font-body font-light italic text-[0.7rem] text-[#444444] p-[12px]">
+      </div>
+
+      <div className="px-[12px] py-[16px] border-t border-[#222222] bg-[#111111] shrink-0 font-body font-light italic text-[0.7rem] text-[#444444]">
         Proof of Work. NOT perfection.
       </div>
     </div>
@@ -330,6 +333,8 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
   const [followerCount, setFollowerCount] = useState(0);
+  const [momentumPercent, setMomentumPercent] = useState<number | null>(null);
+  const [momentumStateColour, setMomentumStateColour] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -363,6 +368,10 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
         .then((data) => {
           if (data?.data?.profile) {
             setFollowerCount(data.data.profile.followers);
+            if (data.data.profile.momentumPercent !== undefined) {
+              setMomentumPercent(data.data.profile.momentumPercent);
+              setMomentumStateColour(data.data.profile.momentumStateColour);
+            }
           }
         })
         .catch(console.error);
@@ -380,9 +389,10 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
 
   const initials = profile?.name ? profile.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() : "?";
   const entryCount = profile?.entry_count || 0;
-  const progressPercent = Math.min((entryCount / 100) * 100, 100);
+  const progressPercent = momentumPercent !== null ? momentumPercent : Math.min((entryCount / 100) * 100, 100);
 
-  const MAIN_NAV = [
+  type NavItem = { href: string; label: string; icon: any; badge?: boolean };
+  const MAIN_NAV: NavItem[] = [
     { href: "/dashboard", label: "Home", icon: Home },
     { href: "/explore", label: "Explore", icon: Compass },
     { href: profile?.username ? `/${profile.username}` : "/profile", label: "My Builds", icon: LayoutDashboard },
@@ -390,15 +400,16 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
     { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
   ];
 
-  const SECONDARY_NAV = [
+  const SECONDARY_NAV: NavItem[] = [
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/how-it-works", label: "Help", icon: HelpCircle },
     { href: "/about", label: "About Arcline", icon: BookOpen },
   ];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* USER PROFILE MINI CARD */}
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar py-[16px] px-[12px]">
+        {/* USER PROFILE MINI CARD */}
       <div className="bg-[#080808] border border-[#222222] p-[12px] mb-[12px]">
         <div className="flex items-center gap-3 mb-3">
           {profile?.avatar_url ? (
@@ -415,7 +426,7 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
         </div>
         <div className="mb-2">
           <div className="h-[4px] w-full bg-[#222222] mb-1">
-            <div className="h-full bg-[#E8572A]" style={{ width: `${progressPercent}%` }} />
+            <div className="h-full bg-[#E8572A] transition-all duration-700 ease-out" style={{ width: `${progressPercent}%` }} />
           </div>
           <div className="font-mono text-[0.55rem] text-[#555555]">Day {diffDays} &middot; {entryCount} entries</div>
         </div>
@@ -524,8 +535,10 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
         </nav>
       </div>
 
+      </div>
+
       {/* BOTTOM */}
-      <div className="mt-auto px-[12px] pt-[12px]">
+      <div className="px-[12px] py-[16px] border-t border-[#222222] bg-[#111111] shrink-0">
         <button onClick={signOut} className="flex items-center gap-2 group w-full">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="Avatar" className="w-[24px] h-[24px] rounded-full object-cover" />
@@ -534,7 +547,7 @@ function LoggedInSidebar({ pathname, profile, signOut }: { pathname: string; pro
               {initials}
             </div>
           )}
-          <span className="font-body text-[0.72rem] text-[#555555] group-hover:text-[#EF5350] transition-colors">Sign out</span>
+          <span className="font-body text-[0.92rem] font-semibold text-[#555555] group-hover:text-[#EF5350] transition-colors">Sign out</span>
         </button>
       </div>
     </div>

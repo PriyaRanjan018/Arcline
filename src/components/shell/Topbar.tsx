@@ -281,7 +281,7 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
               </div>
 
               {/* USER DROPDOWN (appears on hover) */}
-              <div className="absolute right-0 top-[38px] w-[240px] bg-[#0c0c0c] border border-border shadow-xl z-50 flex flex-col opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="absolute right-0 top-[48px] w-[240px] bg-[#0c0c0c] border border-border shadow-xl z-50 flex flex-col opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                 {/* Header (Signed in identity) */}
                 <div className="px-4 py-3 border-b border-[#222222] flex flex-col text-left">
                   <span className="text-[10px] text-text3 font-mono">Signed in as</span>
