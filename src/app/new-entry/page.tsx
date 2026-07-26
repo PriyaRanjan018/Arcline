@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageTransition from "@/components/shared/PageTransition";
@@ -25,7 +25,7 @@ const PLACEHOLDER: Record<string, string> = {
   REALIZATION: "What clicked? Describe the shift in thinking.",
 };
 
-export default function NewEntryPage() {
+function NewEntryContent() {
   const { profile } = useAuth();
   const supabase = createClient();
   const router = useRouter();
@@ -417,5 +417,13 @@ export default function NewEntryPage() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+export default function NewEntryPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-text3 font-mono text-sm">Loading...</div>}>
+      <NewEntryContent />
+    </Suspense>
   );
 }
