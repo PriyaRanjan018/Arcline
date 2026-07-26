@@ -47,3 +47,12 @@ next-env.d.ts
 *.swp
 *.swo
 .eslintcache
+
+# Sensitive and scratch files
+*.log
+*.sql
+check_*.js
+test_*.js
+test-*.js
+fetch_notifs.js
+brain/
