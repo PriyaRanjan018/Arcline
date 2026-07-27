@@ -57,3 +57,7 @@ test-*.js
 fetch_notifs.js
 brain/
 supabase/.temp/
+
+# Arcline Docs
+ARCLINE_PROGRESS_SYSTEM.md
+DEPLOYMENT.md
