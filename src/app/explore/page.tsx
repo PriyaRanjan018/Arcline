@@ -32,7 +32,8 @@ const LOGGED_IN_TABS = [
 function mapEntryToCardShape(dbEntry: any) {
   return {
     id: dbEntry.id,
-    projectId: dbEntry.project.title, // or slug
+    projectId: dbEntry.project.title, // used for display
+    projectSlug: dbEntry.project.slug || dbEntry.project.id, // used for URLs
     builder: {
       username: dbEntry.author.username,
       name: dbEntry.author.name,
@@ -43,8 +44,11 @@ function mapEntryToCardShape(dbEntry: any) {
     title: dbEntry.title,
     content: dbEntry.body,
     date: new Date(dbEntry.created_at).toLocaleDateString(),
+    dayNumber: dbEntry.day_number ?? null,
+    reactionCount: dbEntry.reaction_count ?? 0,
+    commentCount: dbEntry.comment_count ?? 0,
     reactions: {
-      feel: 0, keepGoing: 0, hitMe: 0, beenHere: 0 // Will be handled by ReactionBar via initialCounts
+      feel: 0, keepGoing: 0, hitMe: 0, beenHere: 0,
     },
     reaction_count: dbEntry.reaction_count,
   };

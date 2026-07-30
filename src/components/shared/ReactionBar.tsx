@@ -11,14 +11,14 @@ interface Reactions {
   KEEP_GOING: number;
   HIT_ME: number;
   BEEN_HERE: number;
-  [key: string]: number; // Allow dynamic access
+  [key: string]: number;
 }
 
 const REACTION_DEFS = [
-  { key: "FEEL_THIS", label: "I feel this",       icon: Flame          },
-  { key: "KEEP_GOING",label: "Keep going",        icon: ArrowUpCircle  },
-  { key: "HIT_ME",    label: "This hit me",       icon: Zap            },
-  { key: "BEEN_HERE", label: "I've been here too",icon: Hand           },
+  { key: "FEEL_THIS",  label: "Feel this",  icon: Flame         },
+  { key: "KEEP_GOING", label: "Keep going", icon: ArrowUpCircle },
+  { key: "HIT_ME",     label: "Hit me",     icon: Zap           },
+  { key: "BEEN_HERE",  label: "Been here",  icon: Hand          },
 ];
 
 export default function ReactionBar({
@@ -26,14 +26,17 @@ export default function ReactionBar({
   initialCounts,
   initialUserReactions = [],
   className,
+  onCountChange,
 }: {
   entryId: string;
   initialCounts: Reactions;
   initialUserReactions?: string[];
   className?: string;
+  /** Called with new total reaction count after any toggle */
+  onCountChange?: (total: number) => void;
 }) {
-  const { user } = useAuth();
-  const router = useRouter();
+  const { user }   = useAuth();
+  const router     = useRouter();
   const [counts, setCounts] = useState<Reactions>(initialCounts);
   const [active, setActive] = useState<Set<string>>(new Set(initialUserReactions));
 
@@ -56,25 +59,28 @@ export default function ReactionBar({
   }, [entryId, user]);
 
   async function toggle(key: string) {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
+    if (!user) { router.push("/login"); return; }
 
     const isActive = active.has(key);
-    
+
     // Optimistic UI update
+    const newCounts = {
+      ...counts,
+      [key]: Math.max(0, (counts[key] || 0) + (isActive ? -1 : 1)),
+    };
     setActive(prev => {
       const next = new Set(prev);
       isActive ? next.delete(key) : next.add(key);
       return next;
     });
-    setCounts(prev => ({
-      ...prev,
-      [key]: Math.max(0, (prev[key] || 0) + (isActive ? -1 : 1)),
-    }));
+    setCounts(newCounts);
 
-    // API call
+    // Notify parent card with new aggregate total
+    if (onCountChange) {
+      const total = Object.values(newCounts).reduce((a, b) => a + b, 0);
+      onCountChange(total);
+    }
+
     try {
       await fetch(`/api/journal/${entryId}/reactions`, {
         method: isActive ? "DELETE" : "POST",
@@ -83,7 +89,6 @@ export default function ReactionBar({
       });
     } catch (err) {
       console.error("Failed to toggle reaction:", err);
-      // Revert on error could be implemented here
     }
   }
 
@@ -96,8 +101,8 @@ export default function ReactionBar({
             key={key}
             onClick={() => toggle(key)}
             className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 border text-xs font-medium",
-              "transition-all duration-150 rounded-none select-none",
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium",
+              "transition-all duration-150 select-none",
               isActive
                 ? "bg-accentDim border-accent text-accent"
                 : "bg-surface border-border2 text-text2 hover:border-text3 hover:text-text1"
@@ -107,7 +112,7 @@ export default function ReactionBar({
             <span>{label}</span>
             {counts[key] > 0 && (
               <span className={cn(
-                "font-mono ml-0.5 text-[10px]",
+                "tabular-nums text-[10px] ml-0.5",
                 isActive ? "text-accent" : "text-text3"
               )}>
                 {counts[key]}

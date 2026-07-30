@@ -438,8 +438,9 @@ function LoginForm() {
             <>
               <h2 className="font-display font-bold text-[1.6rem] text-[#F2EDE4] mb-2">Welcome back.</h2>
               <p className="font-body font-light text-[0.85rem] text-[#888888] mb-8 text-center">
-                Or join 2,847 builders documenting honestly.
+                Or join 124 builders documenting honestly.
               </p>
+
 
               <div className="w-full space-y-[8px] mb-8">
                 <button

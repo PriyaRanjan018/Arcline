@@ -46,6 +46,7 @@ export default function BookmarksPage() {
             const mapped = filtered.map((dbEntry: any) => ({
               id: dbEntry.id,
               projectId: dbEntry.project?.title ?? "",
+              projectSlug: dbEntry.project?.slug || dbEntry.project?.id || "",
               builder: {
                 username: dbEntry.author?.username ?? "",
                 name:     dbEntry.author?.name     ?? "Builder",

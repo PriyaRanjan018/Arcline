@@ -13,6 +13,7 @@ function mapEntryToCardShape(dbEntry: any) {
   return {
     id: dbEntry.id,
     projectId: dbEntry.project?.title ?? "",
+    projectSlug: dbEntry.project?.slug || dbEntry.project?.id || "",
     builder: {
       username: dbEntry.author?.username ?? "",
       name:     dbEntry.author?.name     ?? "Builder",
@@ -77,9 +78,9 @@ export default function LandingPage() {
           style={{ fontSize: "clamp(2.8rem, 4.7vw, 4.8rem)", lineHeight: 1.05, letterSpacing: "-0.03em" }}
         >
           Proof<br />
-          of <span className="ml-3">work</span><br />
-          NOT<br />
-          <span className="italic text-accent" style={{ fontSize: "4.2rem" }}>perfection.</span>
+          of <span className="ml-3" style={{ fontSize: "4.5rem" }}>work</span><br />
+          <span>NOT</span><br />
+          <span className="italic text-accent" style={{ fontSize: "4.1rem" }}>perfection.</span>
         </h1>
         <p className="text-text2 mb-8 text-sm leading-relaxed">
           Arcline is a proof-of-work platform for builders. Stop curating a perfect grid. Start documenting the struggles, pivots, and realizations that actually make you dangerous.

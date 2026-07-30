@@ -24,12 +24,18 @@ const FILTER_OPTIONS = [
   { value: "REALIZATION", label: "Realizations" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "DESC", label: "Newest first" },
+  { value: "ASC", label: "Oldest first" },
+];
+
 // ── Entry mapper ──────────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapEntryToCardShape(dbEntry: any) {
   return {
     id: dbEntry.id,
     projectId: dbEntry.project?.title ?? "",
+    projectSlug: dbEntry.project?.slug || dbEntry.project?.id || "",
     builder: {
       username: dbEntry.author?.username ?? "",
       name:     dbEntry.author?.name     ?? "Builder",
@@ -66,6 +72,7 @@ export default function BuildLogPage({ params }: { params: { username: string; p
   const [activeTab, setActiveTab] = useState<"Build Log" | "Journey Map">("Build Log");
   const [viewMode, setViewMode] = useState<"standard" | "compact">("standard");
   const [filterType, setFilterType] = useState<string>("ALL");
+  const [sortOrder, setSortOrder] = useState<string>("DESC");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -365,21 +372,28 @@ export default function BuildLogPage({ params }: { params: { username: string; p
                 <div className="flex items-center gap-4">
                   <div className="w-36">
                     <CustomSelect
+                      value={sortOrder}
+                      onChange={setSortOrder}
+                      options={SORT_OPTIONS}
+                    />
+                  </div>
+                  <div className="w-36">
+                    <CustomSelect
                       value={filterType}
                       onChange={setFilterType}
                       options={FILTER_OPTIONS}
                     />
                   </div>
-                  <div className="flex items-center gap-1 bg-surface2 p-1 border border-border2">
+                  <div className="flex items-center gap-1 bg-surface2 p-1 border border-border2 rounded-md">
                     <button 
                       onClick={() => setViewMode("standard")}
-                      className={cn("p-1.5 transition-colors", viewMode === "standard" ? "bg-surface border border-border2 text-text1" : "bg-transparent border border-transparent text-text3 hover:text-text2")}
+                      className={cn("p-1.5 transition-colors rounded-sm", viewMode === "standard" ? "bg-surface border border-border2 text-text1" : "bg-transparent border border-transparent text-text3 hover:text-text2")}
                     >
                       <LayoutList className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => setViewMode("compact")}
-                      className={cn("p-1.5 transition-colors", viewMode === "compact" ? "bg-surface border border-border2 text-text1" : "bg-transparent border border-transparent text-text3 hover:text-text2")}
+                      className={cn("p-1.5 transition-colors rounded-sm", viewMode === "compact" ? "bg-surface border border-border2 text-text1" : "bg-transparent border border-transparent text-text3 hover:text-text2")}
                     >
                       <Menu className="w-4 h-4" />
                     </button>
@@ -388,20 +402,29 @@ export default function BuildLogPage({ params }: { params: { username: string; p
               </div>
 
               <div className="space-y-6">
-                {(filterType === "ALL" ? entries : entries.filter((e) => e.type === filterType)).length > 0 ? (
-                  (filterType === "ALL" ? entries : entries.filter((e) => e.type === filterType)).map((entry) => (
+                {(() => {
+                  let filtered = filterType === "ALL" ? entries : entries.filter((e) => e.type === filterType);
+                  if (sortOrder === "ASC") {
+                    filtered = [...filtered].reverse(); // reverse since entries come DESC from the server
+                  }
+                  
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-12 border border-dashed border-border2 bg-surface2/50 rounded-lg">
+                        <p className="text-text3 font-mono text-sm mb-4">No entries yet.</p>
+                        {isOwner && (
+                          <Link href="/new-entry">
+                            <Button variant="outline" size="sm">Log the first entry</Button>
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((entry) => (
                     <EntryCard key={entry.id} entry={entry} variant={viewMode as any} />
-                  ))
-                ) : (
-                  <div className="text-center py-12 border border-dashed border-border2 bg-surface2/50">
-                    <p className="text-text3 font-mono text-sm mb-4">No entries yet.</p>
-                    {isOwner && (
-                      <Link href="/new-entry">
-                        <Button variant="outline" size="sm">Log the first entry</Button>
-                      </Link>
-                    )}
-                  </div>
-                )}
+                  ));
+                })()}
               </div>
             </div>
           )}

@@ -108,11 +108,23 @@ function BuildPulseTab({ builder, entries }: { builder: any, entries: any[] }) {
         </div>
 
         {/* Progress bar */}
-        <div className="relative h-2 bg-bg border border-border2 overflow-hidden">
+        <div className="relative h-[8px] bg-bg rounded-full border border-border2">
           <div
-            className="absolute inset-y-0 left-0 transition-all duration-700 ease-out"
-            style={{ width: `${momentum.percent}%`, background: "#E8572A" }}
-          />
+            className="absolute inset-y-0 left-0 transition-all duration-700 ease-out rounded-full"
+            style={{ 
+              width: `${momentum.percent}%`, 
+              background: `linear-gradient(to right, rgba(232,87,42,0.1), rgba(232,87,42,0.5), #E8572A)`
+            }}
+          >
+            {/* Glowing Knob */}
+            <div 
+              className="absolute right-0 top-1/2 w-[14px] h-[14px] rounded-full bg-[#E8572A] border-[2px] border-[#111] z-[1]"
+              style={{
+                transform: 'translate(50%, -50%)',
+                boxShadow: '0 0 20px 8px rgba(232,87,42,0.3)',
+              }}
+            />
+          </div>
         </div>
 
         {/* JMS breakdown sub-row */}
@@ -178,6 +190,7 @@ function mapEntryToCardShape(dbEntry: any) {
   return {
     id: dbEntry.id,
     projectId: dbEntry.project?.title ?? "",
+    projectSlug: dbEntry.project?.slug || dbEntry.project?.id || "",
     builder: {
       username: dbEntry.author?.username ?? "",
       name: dbEntry.author?.name ?? "Builder",

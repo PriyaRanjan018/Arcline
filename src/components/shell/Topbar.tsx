@@ -226,7 +226,7 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
 
               {/* NOTIFICATIONS DROPDOWN */}
               {showNotifications && (
-                <div className="absolute right-0 top-[48px] w-[320px] bg-[#111111] border border-[#222222] shadow-xl z-50 flex flex-col">
+                <div className="absolute right-0 top-[48px] w-[320px] bg-[#111111] border border-[#222222] rounded overflow-hidden shadow-xl z-50 flex flex-col">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-[#222222]">
                     <h3 className="font-display font-bold text-[1rem] text-[#F2EDE4]">Notifications</h3>
                     <button onClick={markAllRead} className="font-body text-[0.7rem] text-[#888888] hover:text-[#F2EDE4] transition-colors">
@@ -281,21 +281,21 @@ export default function Topbar({ isLanding }: { isLanding?: boolean }) {
               </div>
 
               {/* USER DROPDOWN (appears on hover) */}
-              <div className="absolute right-0 top-[48px] w-[240px] bg-[#0c0c0c] border border-border shadow-xl z-50 flex flex-col opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="absolute right-0 top-[48px] w-[240px] bg-[#0c0c0c] border border-border rounded-sm overflow-hidden shadow-xl z-50 flex flex-col opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                 {/* Header (Signed in identity) */}
-                <div className="px-4 py-3 border-b border-[#222222] flex flex-col text-left">
+                <div className="px-4 py-3 border-b border-[#222222] flex flex-col text-left bg-[#0c0c0c]">
                   <span className="text-[10px] text-text3 font-mono">Signed in as</span>
                   <span className="font-body font-semibold text-xs text-text1 truncate mt-0.5">{profile?.name || "Builder"}</span>
                   <span className="font-mono text-[10px] text-text3 truncate">@{profile?.username || "username"}</span>
                 </div>
 
                 {/* Status Indicator Button */}
-                <div className="px-4 py-2 border-b border-[#222222] text-left">
+                <div className="px-4 py-2 border-b border-[#222222] text-left bg-[#0c0c0c]">
                   <button 
                     onClick={() => {
                       window.location.href = "/settings";
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-[#141414] border border-border2 hover:border-accent/40 text-[11px] text-text2 hover:text-text1 transition-all rounded-none text-left"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-[#141414] border border-border2 hover:border-accent/40 text-[11px] text-text2 hover:text-text1 transition-all rounded-sm text-left"
                   >
                     <Smile className="w-3.5 h-3.5 text-accent" />
                     <span className="truncate">Set status...</span>

@@ -3,11 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'IBM Plex Sans', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
-  --font-logo: 'Cormorant Garamond', serif;
-  --bg:          #080808;
+  /* ── Fonts (wired to next/font/google CSS variables on <html>) ── */
+  --font-display: var(--font-outfit, 'Outfit', sans-serif);
+  --font-body:    var(--font-inter, 'Inter', sans-serif);
+  --font-mono:    var(--font-ibm-mono, 'IBM Plex Mono', monospace);
+  --font-logo:    var(--font-outfit, 'Outfit', sans-serif);
+
+  /* ── Colours ── */
+  --bg:          #0a0a0a;
   --surface:     #111111;
   --surface-2:   #161616;
   --border:      #222222;
@@ -16,22 +19,28 @@
   --accent-dim:  rgba(232,87,42,0.13);
   --gold:        #C9A96E;
   --gold-dim:    rgba(201,169,110,0.13);
-  --text-1:      #F2EDE4;
-  --text-2:      #999999;
+  --text-1:      #F0EBE2;
+  --text-2:      #9A9A9A;
   --text-3:      #555555;
   --win:         #4CAF50;
   --setback:     #FF9800;
   --milestone:   #7EB8F5;
   --realization: #C9A96E;
+
+  /* ── Radius tokens ── */
+  --radius:    16px;
+  --radius-sm: 8px;
+  --radius-xs: 4px;
 }
 
 @layer base {
   body {
     @apply bg-[var(--bg)] text-[var(--text-1)] antialiased font-body;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+    letter-spacing: -0.015em;
   }
 }
 
@@ -55,6 +64,13 @@
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
 }
+
+/* Breathing pulse for the entry-type colour dot in EntryCard */
+@keyframes typeDotPulse {
+  0%,100% { opacity: 1;   transform: scale(1);    }
+  50%     { opacity: 0.55; transform: scale(0.8); }
+}
+
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }

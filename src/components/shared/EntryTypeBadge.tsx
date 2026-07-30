@@ -2,23 +2,30 @@ import { cn } from "@/lib/utils";
 
 type EntryType = "WIN" | "SETBACK" | "MILESTONE" | "REALIZATION";
 
-export default function EntryTypeBadge({ type, className }: { type: EntryType; className?: string }) {
-  const styles = {
-    WIN: "text-win border-win",
-    SETBACK: "text-setback border-setback bg-[rgba(255,152,0,0.05)]", // slightly stronger bg for setbacks
-    MILESTONE: "text-milestone border-milestone",
-    REALIZATION: "text-realization border-realization",
-  };
+const LABEL: Record<EntryType, string> = {
+  WIN:         "Win",
+  SETBACK:     "Setback",
+  MILESTONE:   "Milestone",
+  REALIZATION: "Realization",
+};
 
+const STYLES: Record<EntryType, string> = {
+  WIN:         "text-win  border-win/40  bg-[rgba(76,175,80,0.07)]",
+  SETBACK:     "text-setback border-setback/40 bg-[rgba(255,152,0,0.07)]",
+  MILESTONE:   "text-milestone border-milestone/40 bg-[rgba(126,184,245,0.07)]",
+  REALIZATION: "text-realization border-realization/40 bg-[rgba(201,169,110,0.07)]",
+};
+
+export default function EntryTypeBadge({ type, className }: { type: EntryType; className?: string }) {
   return (
     <span
       className={cn(
-        "inline-block px-1.5 py-0.5 border rounded-none text-[10px] font-mono tracking-widest uppercase",
-        styles[type],
+        "inline-block px-2 py-0.5 border rounded-md text-xs font-medium",
+        STYLES[type],
         className
       )}
     >
-      {type}
+      {LABEL[type]}
     </span>
   );
 }

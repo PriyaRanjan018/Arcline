@@ -4,45 +4,58 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trash2, Bookmark } from "lucide-react";
+import { Trash2, Bookmark, Heart, MessageCircle } from "lucide-react";
 import { animations } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import Avatar from "./Avatar";
-import EntryTypeBadge from "./EntryTypeBadge";
 import ReactionBar from "./ReactionBar";
 
 interface EntryCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entry: any;
-  variant?: "standard" | "spotlight" | "feed" | "compact";
+  variant?: "standard" | "spotlight" | "feed" | "compact" | "detail";
   className?: string;
   onDelete?: (id: string) => void;
 }
 
+// ── Type metadata ────────────────────────────────────────────────
+const TYPE_CONFIG = {
+  WIN:         { color: "#4CAF50", label: "Win"         },
+  SETBACK:     { color: "#FF9800", label: "Setback"     },
+  MILESTONE:   { color: "#7EB8F5", label: "Milestone"   },
+  REALIZATION: { color: "#C9A96E", label: "Realization" },
+} as const;
+
 export default function EntryCard({ entry, variant = "standard", className, onDelete }: EntryCardProps) {
   const { profile, user } = useAuth();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting]           = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setIsBookmarked]       = useState(false);
+  const [showReactions, setShowReactions]     = useState(false);
+  const [reactionCount, setReactionCount]     = useState(
+    entry.reactionCount ?? entry.reaction_count ?? 0
+  );
+
   const isOwner = profile?.username === entry.builder.username;
+  const typeConfig = TYPE_CONFIG[entry.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.WIN;
+
+  // Derive day number / entry number label
+  const dayNumber: number | null = entry.dayNumber ?? entry.day_number ?? null;
+  const commentCount: number = entry.commentCount ?? entry.comment_count ?? 0;
 
   useEffect(() => {
     if (!user) return;
-    const storedEntryIds = JSON.parse(localStorage.getItem(`bookmarks_entries_${user.id}`) || "[]");
-    setIsBookmarked(storedEntryIds.includes(entry.id));
+    const stored = JSON.parse(localStorage.getItem(`bookmarks_entries_${user.id}`) || "[]");
+    setIsBookmarked(stored.includes(entry.id));
   }, [user, entry.id]);
 
   const handleBookmark = () => {
-    if (!user) {
-      alert("Please sign in to bookmark entries");
-      return;
-    }
-    const key = `bookmarks_entries_${user.id}`;
-    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+    if (!user) { alert("Please sign in to bookmark entries"); return; }
+    const key     = `bookmarks_entries_${user.id}`;
+    const stored  = JSON.parse(localStorage.getItem(key) || "[]");
     if (isBookmarked) {
-      const updated = stored.filter((id: string) => id !== entry.id);
-      localStorage.setItem(key, JSON.stringify(updated));
+      localStorage.setItem(key, JSON.stringify(stored.filter((id: string) => id !== entry.id)));
       setIsBookmarked(false);
     } else {
       stored.push(entry.id);
@@ -51,26 +64,13 @@ export default function EntryCard({ entry, variant = "standard", className, onDe
     }
   };
 
-  const typeColors = {
-    WIN: "var(--win)",
-    SETBACK: "var(--setback)",
-    MILESTONE: "var(--milestone)",
-    REALIZATION: "var(--realization)",
-  };
-
-  const borderColor = typeColors[entry.type as keyof typeof typeColors];
-
   const executeDelete = async () => {
     if (deleteConfirmText !== "DELETE") return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/journal/${entry.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/journal/${entry.id}`, { method: "DELETE" });
       if (res.ok) {
-        if (onDelete) {
-          onDelete(entry.id);
-        } else {
-          window.location.reload();
-        }
+        onDelete ? onDelete(entry.id) : window.location.reload();
       } else {
         alert("Failed to delete entry");
         setIsDeleting(false);
@@ -84,127 +84,226 @@ export default function EntryCard({ entry, variant = "standard", className, onDe
   return (
     <motion.div
       variants={animations.staggerItem}
-      whileHover={{ y: -2, borderColor: 'var(--border-2)' }}
+      whileHover={{ y: -1 }}
       viewport={{ once: true, margin: "-50px" }}
       className={cn(
-        "bg-surface border border-border p-5 rounded-none flex flex-col gap-4 relative",
-        "border-l-[3px]",
+        "bg-surface border border-border rounded-2xl p-5 flex flex-col gap-3.5 relative",
+        "hover:border-border2 transition-colors duration-200",
         className
       )}
-      style={{ borderLeftColor: borderColor }}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={`/${entry.builder.username}`}>
-            <Avatar initials={entry.builder.initials} src={entry.builder.avatarUrl || entry.builder.avatar_url} bgColor={entry.builder.avatarBg} />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <Link href={`/${entry.builder.username}`} className="font-body font-medium text-sm hover:text-accent transition-colors">
-                {entry.builder.name}
-              </Link>
-              <span className="text-text3 text-xs font-mono">•</span>
-              <span className="text-text3 text-xs font-mono">{entry.date}</span>
-            </div>
-            <Link href={`/${entry.builder.username}/${entry.projectId}`} className="text-xs text-text2 hover:text-text1">
-              Building <span className="underline decoration-border2 underline-offset-2">{entry.projectId}</span>
-            </Link>
-          </div>
+      {/* ── Top bar: type dot + label  |  day number ── */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* Pulsing type-colour dot */}
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{
+              backgroundColor: typeConfig.color,
+              boxShadow: `0 0 0 0 ${typeConfig.color}`,
+              animation: "typeDotPulse 2.5s infinite",
+            }}
+          />
+          <span className="text-xs font-medium text-text2">{typeConfig.label}</span>
         </div>
-        <EntryTypeBadge type={entry.type} />
-      </div>
-
-      {/* Content */}
-      <div>
-        <h3 className={cn("font-display font-bold text-text1", variant === "compact" ? "text-base" : "text-xl mb-2")}>{entry.title}</h3>
-        {variant !== "compact" && (
-          <p className="text-text2 text-sm leading-relaxed">{entry.content}</p>
+        {dayNumber != null && (
+          <span className="text-xs text-text3 tabular-nums">
+            #{String(dayNumber).padStart(3, "0")}
+          </span>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="mt-2 pt-4 border-t border-border flex items-center justify-between">
-        <ReactionBar 
-          entryId={entry.id}
-          initialCounts={{
-            FEEL_THIS: entry.reactions?.feel || entry.reaction_count || 0,
-            KEEP_GOING: entry.reactions?.keepGoing || 0,
-            HIT_ME: entry.reactions?.hitMe || 0,
-            BEEN_HERE: entry.reactions?.beenHere || 0,
-          }}
-          initialUserReactions={[]} // Would come from DB if populated
-        />
-        <div className="flex items-center gap-2">
-          {!isOwner && (
-            <button 
-              onClick={handleBookmark}
-              className={cn(
-                "transition-colors p-2 rounded-sm",
-                isBookmarked ? "text-accent" : "text-text3 hover:text-accent"
-              )}
-              title={isBookmarked ? "Remove Bookmark" : "Bookmark Entry"}
+      {/* ── Builder info ── */}
+      <div className="flex items-center gap-2.5">
+        <Link href={`/${entry.builder.username}`} className="flex-shrink-0">
+          <Avatar
+            initials={entry.builder.initials}
+            src={entry.builder.avatarUrl || entry.builder.avatar_url}
+            bgColor={entry.builder.avatarBg}
+            size="sm"
+          />
+        </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Link
+              href={`/${entry.builder.username}`}
+              className="text-sm font-medium text-text1 hover:text-accent transition-colors leading-tight"
             >
-              <Bookmark className="w-4 h-4" fill={isBookmarked ? "currentColor" : "none"} />
-            </button>
-          )}
-          
-          {isOwner && (
-            <button 
-              onClick={() => setShowDeleteModal(true)} 
-              disabled={isDeleting}
-              className="text-text3 hover:text-red-500 transition-colors p-2 rounded-sm disabled:opacity-50"
-              title="Delete Entry"
+              {entry.builder.name}
+            </Link>
+            <span className="text-text3 text-[11px]">·</span>
+            <span className="text-[11px] text-text3">{entry.date}</span>
+          </div>
+          {entry.projectId && (
+            <Link 
+              href={`/${entry.builder.username}/${entry.projectSlug || entry.projectId}`}
+              className="text-[11px] text-text3 hover:text-text2 transition-colors truncate block mt-0.5"
             >
-              <Trash2 className="w-4 h-4" />
-            </button>
+              {entry.projectId}
+            </Link>
           )}
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* ── Title ── */}
+      <h3
+        className={cn(
+          "font-semibold text-text1 leading-snug",
+          variant === "compact" ? "text-base" : "text-[1.1rem]"
+        )}
+      >
+        {entry.title}
+      </h3>
+
+      {/* ── Content preview ── */}
+      {variant !== "compact" && entry.content && (
+        <p className={cn("text-sm text-text2 leading-relaxed -mt-1", variant !== "detail" && "line-clamp-3")}>
+          {entry.content}
+        </p>
+      )}
+
+      {/* ── Tag pills ── */}
+      {entry.tags && entry.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 -mt-0.5">
+          {entry.tags.map((tag: string) => (
+            <span
+              key={tag}
+              className="px-2.5 py-0.5 rounded-full border border-border2 text-[11px] text-text2 bg-surface2"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* ── Expanded Reactions ── */}
+      {showReactions && (
+        <div className="border-t border-border pt-3">
+          <ReactionBar
+            entryId={entry.id}
+            initialCounts={{
+              FEEL_THIS:  entry.reactions?.feel      || 0,
+              KEEP_GOING: entry.reactions?.keepGoing || 0,
+              HIT_ME:     entry.reactions?.hitMe     || 0,
+              BEEN_HERE:  entry.reactions?.beenHere  || 0,
+            }}
+            initialUserReactions={[]}
+            onCountChange={(total) => setReactionCount(total)}
+          />
+        </div>
+      )}
+
+      {/* ── Footer ── */}
+      <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
+        {/* Left: ♥ count + 💬 count */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowReactions((p) => !p)}
+            className={cn(
+              "flex items-center gap-1.5 transition-colors group",
+              showReactions ? "text-accent" : "text-text3 hover:text-accent"
+            )}
+          >
+            <Heart
+              className="w-4 h-4 group-hover:scale-110 transition-transform"
+              fill={showReactions ? "currentColor" : "none"}
+            />
+            <span className="text-xs tabular-nums">{reactionCount}</span>
+          </button>
+
+          <div className="flex items-center gap-1.5 text-text3">
+            <MessageCircle className="w-4 h-4" />
+            <span className="text-xs tabular-nums">{commentCount}</span>
+          </div>
+        </div>
+
+        {/* Right: owner controls + View → */}
+        <div className="flex items-center gap-1">
+          {!isOwner && (
+            <button
+              onClick={handleBookmark}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors",
+                isBookmarked ? "text-accent" : "text-text3 hover:text-text1"
+              )}
+              title={isBookmarked ? "Remove Bookmark" : "Bookmark Entry"}
+            >
+              <Bookmark
+                className="w-3.5 h-3.5"
+                fill={isBookmarked ? "currentColor" : "none"}
+              />
+            </button>
+          )}
+
+          {isOwner && (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              disabled={isDeleting}
+              className="p-1.5 rounded-lg text-text3 hover:text-red-400 transition-colors disabled:opacity-50"
+              title="Delete Entry"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {variant !== "detail" && (
+            <Link
+              href={`/${entry.builder.username}/${entry.projectSlug || entry.projectId}/${entry.id}`}
+              className="text-xs text-text3 hover:text-accent transition-colors ml-1"
+            >
+              View →
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* ── Delete Confirmation Modal ── */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-surface border border-border w-full max-w-md p-6 shadow-2xl relative">
-            <h2 className="font-display font-bold text-2xl text-text1 mb-2">Delete Entry</h2>
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="font-semibold text-xl text-text1 mb-2">Delete entry</h2>
             <p className="text-text2 text-sm mb-6">
-              This action cannot be undone. This will permanently delete your log entry.
+              This can&apos;t be undone. Your build log entry will be gone forever.
             </p>
             <div className="mb-6">
-              <label className="block text-xs font-mono uppercase tracking-widest text-text3 mb-2">
-                Please type <span className="text-red-500 font-bold">DELETE</span> to confirm.
+              <label className="block text-xs text-text3 mb-2">
+                Type{" "}
+                <span className="text-red-400 font-semibold">DELETE</span>{" "}
+                to confirm.
               </label>
               <input
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                className="w-full bg-bg border border-border2 text-text1 px-4 py-2 font-mono text-sm focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full bg-surface2 border border-border2 text-text1 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-red-500 transition-colors"
                 placeholder="DELETE"
               />
             </div>
             <div className="flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
-                className="px-4 py-2 font-body text-sm font-medium hover:text-text1 text-text2 transition-colors"
+                className="px-4 py-2 text-sm text-text2 hover:text-text1 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className={cn(
-                  "px-4 py-2 font-body text-sm font-medium border transition-colors",
+                  "px-4 py-2 text-sm font-medium rounded-xl border transition-colors",
                   deleteConfirmText === "DELETE"
-                    ? "bg-transparent border-red-500 text-red-500 hover:bg-red-500/10"
-                    : "bg-transparent border-red-900/30 text-red-500/40 cursor-not-allowed"
+                    ? "border-red-500 text-red-400 hover:bg-red-500/10"
+                    : "border-border2 text-text3 cursor-not-allowed"
                 )}
                 disabled={deleteConfirmText !== "DELETE" || isDeleting}
                 onClick={executeDelete}
               >
-                {isDeleting ? "Deleting..." : "Delete entry"}
+                {isDeleting ? "Deleting…" : "Delete entry"}
               </button>
             </div>
           </div>
         </div>
       )}
+
     </motion.div>
   );
 }
+

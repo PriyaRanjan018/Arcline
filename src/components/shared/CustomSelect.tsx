@@ -45,7 +45,7 @@ export default function CustomSelect({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full flex items-center justify-between bg-surface2 border text-sm px-3 py-2 transition-colors focus:outline-none",
+          "w-full flex items-center justify-between bg-surface2 border rounded-sm text-sm px-3 py-2 transition-colors focus:outline-none",
           isOpen ? "border-accent text-text1" : "border-border2 text-text1 hover:border-border hover:text-text1"
         )}
       >
@@ -56,7 +56,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-surface border border-border2 shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-surface border border-border2 shadow-xl rounded-sm max-h-60 overflow-y-auto">
           {options.map((option) => (
             <button
               key={option.value}

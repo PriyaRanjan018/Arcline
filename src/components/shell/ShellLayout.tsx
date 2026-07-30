@@ -46,16 +46,14 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
 
   if (isLanding) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col h-screen overflow-hidden">
         <Topbar isLanding={true} />
-        <main className="flex-1 mt-[48px]">{children}</main>
-        <footer className="w-full py-8 text-center text-[#555555] italic">
-          Proof of Work. NOT perfection.
-        </footer>
+        <main className="flex-1 mt-[48px] overflow-hidden">{children}</main>
         <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       </div>
     );
   }
+
 
   return (
     <div className="flex flex-col min-h-screen">
