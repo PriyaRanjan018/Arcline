@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Inter, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import ShellLayout from "@/components/shell/ShellLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -7,26 +7,34 @@ import SplashScreen from "@/components/shared/SplashScreen";
 
 // ── Fonts ──────────────────────────────────────────────────────────
 // Outfit: friendly geometric sans — headings & display
-const outfit = Outfit({
-  subsets: ["latin"],
+const outfit = localFont({
+  src: "../../node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2",
   variable: "--font-outfit",
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
 // Inter: warm, social body font (used by Twitter, Notion, Linear)
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
   variable: "--font-inter",
-  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 // IBM Plex Mono: kept for genuinely code-like content only
-const ibmMono = IBM_Plex_Mono({
-  subsets: ["latin"],
+const ibmMono = localFont({
+  src: [
+    {
+      path: "../../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2",
+      weight: "500",
+      style: "normal",
+    },
+  ],
   variable: "--font-ibm-mono",
-  weight: ["400", "500"],
   display: "swap",
 });
 
