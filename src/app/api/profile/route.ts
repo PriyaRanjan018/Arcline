@@ -11,7 +11,7 @@ export async function PATCH(req: Request) {
   const { 
     name, username, bio, location, avatar_url, tags, open_to,
     builder_role, currently_building, pronouns, building_since,
-    github_url, twitter_url, website_url, linkedin_url
+    github_url, twitter_url, website_url, linkedin_url, cli_password_hash
   } = body
 
   // Build update payload
@@ -32,6 +32,7 @@ export async function PATCH(req: Request) {
   if (twitter_url !== undefined) updatePayload.twitter_url = twitter_url
   if (website_url !== undefined) updatePayload.website_url = website_url
   if (linkedin_url !== undefined) updatePayload.linkedin_url = linkedin_url
+  if (cli_password_hash !== undefined) updatePayload.cli_password_hash = cli_password_hash
 
   if (username !== undefined) {
     const trimmedUsername = username.trim().toLowerCase()

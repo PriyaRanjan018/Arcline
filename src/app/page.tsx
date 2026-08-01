@@ -78,7 +78,7 @@ export default function LandingPage() {
           style={{ fontSize: "clamp(2.8rem, 4.7vw, 4.8rem)", lineHeight: 1.05, letterSpacing: "-0.03em" }}
         >
           Proof<br />
-          of <span className="ml-3" style={{ fontSize: "4.5rem" }}>work</span><br />
+          of <span className="ml-3" style={{ fontSize: "4.3rem" }}>work</span><br />
           <span>NOT</span><br />
           <span className="italic text-accent" style={{ fontSize: "4.1rem" }}>perfection.</span>
         </h1>

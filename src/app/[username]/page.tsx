@@ -24,6 +24,7 @@ import PageTransition from "@/components/shared/PageTransition";
 import ProjectCard from "@/components/shared/ProjectCard";
 import Avatar from "@/components/shared/Avatar";
 import Button from "@/components/shared/Button";
+import ArcloneMonogram from "@/components/shared/ArcloneMonogram";
 import EntryCard from "@/components/shared/EntryCard";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -539,7 +540,10 @@ function ProfileContent({ params }: { params: { username: string } }) {
     <PageTransition className="flex flex-col min-h-[calc(100vh-48px)]">
       {/* ── Profile Header ───────────────────────────────── */}
       <div className="bg-surface border-b border-border p-6 md:p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(232,87,42,0.03)] to-transparent" />
+        <div className="absolute -left-[10%] md:-left-[5%] top-1/2 -translate-y-1/2 opacity-[0.04] pointer-events-none">
+          <ArcloneMonogram size={800} />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(232,87,42,0.03)] to-transparent pointer-events-none" />
         <div className="max-w-4xl mx-auto relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
           <Avatar initials={builder.name.substring(0, 2).toUpperCase()} src={builder.avatar_url} bgColor="bg-surface2" size="lg" />
 

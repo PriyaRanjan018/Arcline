@@ -86,7 +86,7 @@ export default function BuildHeatmap({ entries, builderSince }: BuildHeatmapProp
     endPlotDate.setHours(23, 59, 59, 999);
 
     const points = [];
-    let cursor = new Date(jan1);
+    const cursor = new Date(jan1);
     let highest = 0;
     const mStarts: { month: string; index: number }[] = [];
     let currentMonth = -1;
@@ -256,7 +256,7 @@ export default function BuildHeatmap({ entries, builderSince }: BuildHeatmapProp
               <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, duration: 0.1 }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
                 style={{
                   position: "absolute",
                   left: (hoverIdx * (chartWidth / Math.max(1, (dataPoints.length - 1)))) + 10,

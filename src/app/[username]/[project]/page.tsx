@@ -13,7 +13,7 @@ import EntryTimeline from "@/components/shared/EntryTimeline";
 import CustomSelect from "@/components/shared/CustomSelect";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, LayoutList, Menu, Bookmark } from "lucide-react";
+import { ArrowLeft, LayoutList, Menu, Bookmark, Terminal, Copy, CheckCircle2 } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const FILTER_OPTIONS = [
@@ -458,6 +458,39 @@ export default function BuildLogPage({ params }: { params: { username: string; p
             </div>
           </div>
         </div>
+
+        {isOwner && (
+          <div className="border border-border2 bg-surface2 p-4">
+            <h3 className="text-xs font-mono uppercase tracking-widest text-text1 mb-2 flex items-center gap-2">
+              <Terminal className="w-3.5 h-3.5" />
+              CLI Connection
+            </h3>
+            <p className="text-xs text-text3 mb-3">
+              Use this key with <span className="font-mono text-text1">arcline link</span> to log entries directly from your terminal.
+            </p>
+            <div className="flex items-center bg-bg border border-border2 overflow-hidden">
+              <input 
+                type="text" 
+                readOnly 
+                value={`arc://${builder?.username || ''}/${project.slug}@${project.id.substring(0, 8)}`}
+                className="w-full bg-transparent text-xs font-mono text-text2 px-2 py-1.5 focus:outline-none"
+              />
+              <button 
+                onClick={(e) => {
+                  navigator.clipboard.writeText(`arc://${builder?.username || ''}/${project.slug}@${project.id.substring(0, 8)}`);
+                  const btn = e.currentTarget;
+                  const originalHtml = btn.innerHTML;
+                  btn.innerHTML = '<svg class="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"></path></svg>';
+                  setTimeout(() => btn.innerHTML = originalHtml, 2000);
+                }}
+                className="px-2 py-1.5 border-l border-border2 hover:bg-white/5 transition-colors text-text3 hover:text-text1"
+                title="Copy Project Key"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {!isOwner && (
           <div className="flex flex-col gap-3">

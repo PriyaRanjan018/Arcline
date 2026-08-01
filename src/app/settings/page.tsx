@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import PageTransition from "@/components/shared/PageTransition";
 import Button from "@/components/shared/Button";
+import bcrypt from "bcryptjs";
 import CustomSelect from "@/components/shared/CustomSelect";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, Shield, Bell, Check, Loader2, UploadCloud, AlertCircle, Globe, Link2, Download, Eye, EyeOff, Trash2 } from "lucide-react";
+import { User, Shield, Bell, Check, Loader2, UploadCloud, AlertCircle, AlertTriangle, Globe, Link2, Download, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -42,12 +43,14 @@ function DeleteAccountModal({
   isOpen, 
   onClose, 
   onConfirm, 
-  isDeleting 
+  isDeleting,
+  error
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
   onConfirm: () => void; 
-  isDeleting: boolean; 
+  isDeleting: boolean;
+  error?: string;
 }) {
   if (!isOpen) return null;
 
@@ -67,6 +70,7 @@ function DeleteAccountModal({
             <li>This action <span className="text-red-400 font-medium">cannot be undone</span>.</li>
           </ul>
         </div>
+        {error && <p className="text-red-400 text-xs mb-4">{error}</p>}
         <div className="flex gap-3 mt-4">
           <button 
             onClick={onClose}
@@ -130,6 +134,13 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // CLI Password states
+  const [cliPassword, setCliPassword] = useState("");
+  const [cliPasswordConfirm, setCliPasswordConfirm] = useState("");
+  const [savingCli, setSavingCli] = useState(false);
+  const [cliPasswordError, setCliPasswordError] = useState("");
+  const [cliPasswordSuccess, setCliPasswordSuccess] = useState("");
 
   // Derive dirty state
   const isDirty = profile ? (
@@ -371,6 +382,39 @@ export default function SettingsPage() {
   };
 
 
+
+  const handleSetCliPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCliPasswordError("");
+    setCliPasswordSuccess("");
+    if (cliPassword !== cliPasswordConfirm) {
+      setCliPasswordError("Passwords do not match");
+      return;
+    }
+    if (cliPassword.length < 6) {
+      setCliPasswordError("Password must be at least 6 characters");
+      return;
+    }
+
+    setSavingCli(true);
+    try {
+      const hash = await bcrypt.hash(cliPassword, 12);
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cli_password_hash: hash }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to set password");
+      setCliPasswordSuccess("CLI Password updated successfully!");
+      setCliPassword("");
+      setCliPasswordConfirm("");
+    } catch (err: any) {
+      setCliPasswordError(err.message || "An error occurred");
+    } finally {
+      setSavingCli(false);
+    }
+  };
 
   const initials = name
     ? name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
@@ -747,6 +791,51 @@ export default function SettingsPage() {
                   <div className="flex justify-end mt-3">
                     <Button size="sm" onClick={() => { setSuccess("Privacy settings saved."); setTimeout(() => setSuccess(""), 3000); }}>Save privacy</Button>
                   </div>
+                </div>
+
+                {/* CLI Access */}
+                <div>
+                  <label className="block text-xs font-mono uppercase tracking-widest text-text2 mb-1">CLI Access Password</label>
+                  <p className="text-xs text-text3 mb-4">Set a password exclusively for authenticating via the Arcline terminal CLI.</p>
+                  <form onSubmit={handleSetCliPassword} className="space-y-4 bg-surface2 border border-border2 p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <input
+                          type="password"
+                          placeholder="New CLI Password"
+                          value={cliPassword}
+                          onChange={e => setCliPassword(e.target.value)}
+                          className="w-full bg-surface2 border border-border2 text-sm text-text1 rounded-none px-3 py-2 focus:outline-none focus:border-accent"
+                          required
+                        />
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="password"
+                          placeholder="Confirm CLI Password"
+                          value={cliPasswordConfirm}
+                          onChange={e => setCliPasswordConfirm(e.target.value)}
+                          className={cn(
+                            "w-full bg-surface2 text-sm rounded-none px-3 py-2 focus:outline-none pr-10 border",
+                            cliPasswordConfirm.length > 0 && cliPasswordConfirm !== cliPassword
+                              ? "border-red-500 focus:border-red-500 text-red-500"
+                              : "border-border2 text-text1 focus:border-accent"
+                          )}
+                          required
+                        />
+                        {cliPasswordConfirm.length > 0 && cliPasswordConfirm !== cliPassword && (
+                          <AlertCircle className="w-4 h-4 text-red-500 absolute right-3 top-1/2 -translate-y-1/2" />
+                        )}
+                      </div>
+                    </div>
+                    {cliPasswordError && <p className="text-red-400 text-xs">{cliPasswordError}</p>}
+                    {cliPasswordSuccess && <p className="text-green-400 text-xs">{cliPasswordSuccess}</p>}
+                    <div className="flex justify-end mt-3">
+                      <Button size="sm" type="submit" disabled={savingCli}>
+                        {savingCli ? "Saving..." : "Set CLI Password"}
+                      </Button>
+                    </div>
+                  </form>
                 </div>
 
                 {/* Export Data */}
