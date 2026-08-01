@@ -157,7 +157,7 @@ export default function EntryCard({ entry, variant = "standard", className, onDe
 
       {/* ── Content preview ── */}
       {variant !== "compact" && entry.content && (
-        <p className={cn("text-sm text-text2 leading-relaxed -mt-1", variant !== "detail" && "line-clamp-3")}>
+        <p className={cn("text-sm text-text2 leading-relaxed -mt-1 whitespace-pre-wrap", variant !== "detail" && "line-clamp-3")}>
           {entry.content}
         </p>
       )}
